@@ -31,11 +31,11 @@ client.on('messageCreate', async (message) => {
   if (message.content === '!pika') {
 
     const embed = new EmbedBuilder()
-      .setTitle('🔥😈 Adquira seu Painel FFH4X IOS 😈🔥')
+      .setTitle('🔥😈 Adquira seu Painel BYPASS IOS FULL 😈🔥')
       .setDescription(`
-🔥😈 **Adquira Já seu Painel iphone safe** 😈🔥  
+🔥😈 **Adquira Já seu Painel BYPASS IOS FULL** 😈🔥  
 
-🔥 **FFH4X SAFE IOS!**  
+🔥 **FFH4X BYPASS IOS FULL!**  
 
 Se você quer qualidade e resultado, esse painel é pra você.  
 
