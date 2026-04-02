@@ -32,21 +32,16 @@ client.on("messageCreate", async (message) => {
     if (message.content === "!painel") {
 
         const embed = new EmbedBuilder()
-            .setTitle("🛒 COMBO BLOX FRUITS PREMIUM")
+            .setTitle("🛒 COMBO BLOX FRUITS")
             .setDescription(`
-✨ Entrega automática e segura
-
-━━━━━━━━━━━━━━
-
-📦 Inclui:
-📈 Level Max +
+📈 LEVEL MAX +
 🗡️ CDK
 ⚔️ TTK
-🔥 E muito mais...
+🔥 E MUITO MAIS
 
 ━━━━━━━━━━━━━━
 
-🍈 Você recebe UMA dessas frutas:
+🍈 Uma dessas:
 
 🐉 Dragon  
 🦊 Kitsune  
@@ -57,12 +52,10 @@ client.on("messageCreate", async (message) => {
 
 ━━━━━━━━━━━━━━
 
-💰 Preço: R$19,90
-⚡ Entrega imediata
+💰 R$19,90
             `)
             .setImage("https://cdn.dfg.com.br/itemimages/944475148-contas-blox-fruits-kitsune-dark-blade-yoru-e-brindes-NI33.webp")
-            .setColor("#ff0000")
-            .setFooter({ text: "Sistema automático • Loja confiável" });
+            .setColor("Red");
 
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
@@ -71,10 +64,7 @@ client.on("messageCreate", async (message) => {
                 .setStyle(ButtonStyle.Danger)
         );
 
-        await message.channel.send({
-            embeds: [embed],
-            components: [row]
-        });
+        message.channel.send({ embeds: [embed], components: [row] });
     }
 });
 
@@ -90,7 +80,6 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.deferReply({ ephemeral: true });
 
         try {
-            // Anti ticket duplicado
             const existing = guild.channels.cache.find(c =>
                 c.topic === interaction.user.id
             );
@@ -106,7 +95,7 @@ client.on("interactionCreate", async (interaction) => {
             const channel = await guild.channels.create({
                 name: `ticket-${String(ticketCount).padStart(3, "0")}`,
                 type: ChannelType.GuildText,
-                topic: interaction.user.id, // identifica dono do ticket
+                topic: interaction.user.id,
                 permissionOverwrites: [
                     {
                         id: guild.roles.everyone.id,
@@ -118,22 +107,22 @@ client.on("interactionCreate", async (interaction) => {
                             PermissionsBitField.Flags.ViewChannel,
                             PermissionsBitField.Flags.SendMessages
                         ]
+                    },
+                    {
+                        id: process.env.DONO_ID,
+                        allow: [
+                            PermissionsBitField.Flags.ViewChannel,
+                            PermissionsBitField.Flags.SendMessages
+                        ]
                     }
                 ]
             });
 
-            // adiciona dono se existir
-            if (process.env.DONO_ID) {
-                await channel.permissionOverwrites.create(process.env.DONO_ID.trim(), {
-                    ViewChannel: true,
-                    SendMessages: true
-                });
-            }
-
-            const buttons = new ActionRowBuilder().addComponents(
+            // BOTÕES DO TICKET (SÓ DONO USA)
+            const row = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
-                    .setCustomId("pago")
-                    .setLabel("✅ Já Paguei")
+                    .setCustomId("confirmar")
+                    .setLabel("✅ Confirmar Pagamento")
                     .setStyle(ButtonStyle.Success),
 
                 new ButtonBuilder()
@@ -142,59 +131,75 @@ client.on("interactionCreate", async (interaction) => {
                     .setStyle(ButtonStyle.Secondary)
             );
 
+            // 🔥 MENSAGEM EXATA QUE VOCÊ PEDIU
             await channel.send({
-                content: `🎫 ${interaction.user}
+                content: `${interaction.user} criou o ticket
 
-💰 Valor: R$19,90
-🔑 PIX: ${process.env.PIX}
+Valor: R$19,90  
+Chave PIX:
 
-📌 Envie o comprovante ou clique em "Já Paguei".`,
-                components: [buttons]
+${process.env.PIX}`,
+                components: [row]
             });
 
             await interaction.editReply({
-                content: `✅ Ticket criado com sucesso: ${channel}`
+                content: `✅ Ticket criado: ${channel}`
             });
 
         } catch (err) {
             console.log("ERRO REAL:", err);
 
             await interaction.editReply({
-                content: "❌ Erro ao criar ticket. Veja logs do Railway."
+                content: "❌ Erro ao criar ticket."
             });
         }
     }
 
-    // ================= PAGO =================
-    if (interaction.customId === "pago") {
+    // ================= CONFIRMAR PAGAMENTO (SÓ DONO) =================
+    if (interaction.customId === "confirmar") {
+
+        if (interaction.user.id !== process.env.DONO_ID) {
+            return interaction.reply({
+                content: "❌ Apenas o dono pode confirmar pagamento.",
+                ephemeral: true
+            });
+        }
 
         await interaction.deferReply({ ephemeral: true });
 
         try {
-            if (!process.env.CARGO_CLIENTE_ID) {
-                return interaction.editReply({
-                    content: "⚠️ Cargo não configurado."
-                });
+            const userId = interaction.channel.topic;
+
+            const member = await guild.members.fetch(userId);
+
+            if (process.env.CARGO_CLIENTE_ID) {
+                await member.roles.add(process.env.CARGO_CLIENTE_ID);
             }
 
-            const member = await guild.members.fetch(interaction.user.id);
-            await member.roles.add(process.env.CARGO_CLIENTE_ID);
+            await interaction.channel.send(`✅ Pagamento confirmado para ${member}`);
 
             await interaction.editReply({
-                content: "✅ Pagamento confirmado! Cargo entregue."
+                content: "Pagamento confirmado!"
             });
 
         } catch (err) {
             console.log(err);
 
             await interaction.editReply({
-                content: "❌ Erro ao entregar cargo."
+                content: "Erro ao confirmar pagamento."
             });
         }
     }
 
-    // ================= FECHAR =================
+    // ================= FECHAR (SÓ DONO) =================
     if (interaction.customId === "fechar") {
+
+        if (interaction.user.id !== process.env.DONO_ID) {
+            return interaction.reply({
+                content: "❌ Apenas o dono pode fechar.",
+                ephemeral: true
+            });
+        }
 
         await interaction.deferReply({ ephemeral: true });
 
@@ -210,7 +215,7 @@ client.on("interactionCreate", async (interaction) => {
             fs.writeFileSync(`transcript-${interaction.channel.name}.txt`, transcript);
 
             await interaction.editReply({
-                content: "📁 Transcript salvo! Fechando em 5s..."
+                content: "📁 Ticket fechado em 5s..."
             });
 
             setTimeout(() => {
@@ -221,7 +226,7 @@ client.on("interactionCreate", async (interaction) => {
             console.log(err);
 
             await interaction.editReply({
-                content: "❌ Erro ao fechar ticket."
+                content: "Erro ao fechar ticket."
             });
         }
     }
