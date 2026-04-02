@@ -21,14 +21,11 @@ client.once("clientReady", () => {
     console.log(`✅ Bot online: ${client.user.tag}`);
 });
 
-// ================= PAINEL =================
+// ================= COMANDO !painel =================
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
     if (message.content === "!painel") {
-
-        // só o dono usa
-        if (message.author.id !== process.env.DONO_ID) return;
 
         const embed = new EmbedBuilder()
             .setTitle("🛒 COMBO BLOX FRUITS")
@@ -36,9 +33,6 @@ client.on("messageCreate", async (message) => {
 📈 LEVEL MAX +
 🗡️ CDK
 ⚔️ TTK
-🔥 E MUITO MAIS
-
-━━━━━━━━━━━━━━
 
 🍈 Frutas:
 🐉 Dragon
@@ -47,8 +41,6 @@ client.on("messageCreate", async (message) => {
 ❄️ Yeti
 ☁️ Gas
 🍩 Dough
-
-━━━━━━━━━━━━━━
 
 💰 R$19,90
             `)
@@ -66,8 +58,6 @@ client.on("messageCreate", async (message) => {
             embeds: [embed],
             components: [row]
         });
-
-        if (message.deletable) message.delete().catch(() => {});
     }
 });
 
@@ -88,35 +78,29 @@ client.on("interactionCreate", async (interaction) => {
                 .replace(/[^a-zA-Z0-9]/g, "")
                 .toLowerCase();
 
-            const perms = [
-                {
-                    id: guild.roles.everyone.id,
-                    deny: [PermissionsBitField.Flags.ViewChannel]
-                },
-                {
-                    id: user.id,
-                    allow: [
-                        PermissionsBitField.Flags.ViewChannel,
-                        PermissionsBitField.Flags.SendMessages
-                    ]
-                }
-            ];
-
-            // adiciona dono se existir
-            if (process.env.DONO_ID) {
-                perms.push({
-                    id: process.env.DONO_ID.trim(),
-                    allow: [
-                        PermissionsBitField.Flags.ViewChannel,
-                        PermissionsBitField.Flags.SendMessages
-                    ]
-                });
-            }
-
             const ticket = await guild.channels.create({
                 name: `ticket-${nome}`,
                 type: ChannelType.GuildText,
-                permissionOverwrites: perms
+                permissionOverwrites: [
+                    {
+                        id: guild.roles.everyone.id,
+                        deny: [PermissionsBitField.Flags.ViewChannel]
+                    },
+                    {
+                        id: user.id,
+                        allow: [
+                            PermissionsBitField.Flags.ViewChannel,
+                            PermissionsBitField.Flags.SendMessages
+                        ]
+                    },
+                    {
+                        id: process.env.DONO_ID,
+                        allow: [
+                            PermissionsBitField.Flags.ViewChannel,
+                            PermissionsBitField.Flags.SendMessages
+                        ]
+                    }
+                ]
             });
 
             const rowTicket = new ActionRowBuilder().addComponents(
@@ -155,7 +139,7 @@ ${process.env.PIX}`,
 
         if (user.id !== process.env.DONO_ID) {
             return interaction.reply({
-                content: "❌ Apenas o dono confirma.",
+                content: "❌ Apenas o dono pode confirmar.",
                 ephemeral: true
             });
         }
@@ -172,7 +156,7 @@ ${process.env.PIX}`,
 
         if (user.id !== process.env.DONO_ID) {
             return interaction.reply({
-                content: "❌ Apenas o dono fecha.",
+                content: "❌ Apenas o dono pode fechar.",
                 ephemeral: true
             });
         }
