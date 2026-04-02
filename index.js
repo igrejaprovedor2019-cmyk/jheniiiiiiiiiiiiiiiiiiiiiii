@@ -9,6 +9,8 @@ const {
     ChannelType
 } = require("discord.js");
 
+const fs = require("fs");
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -20,7 +22,7 @@ const client = new Client({
 let ticketCount = 0;
 
 client.once("ready", () => {
-    console.log(`🚀 Bot online como ${client.user.tag}`);
+    console.log(`🚀 Loja online como ${client.user.tag}`);
 });
 
 // COMANDO !painel
@@ -32,11 +34,11 @@ client.on("messageCreate", async (message) => {
         const embed = new EmbedBuilder()
             .setTitle("🛒 COMBO BLOX FRUITS PREMIUM")
             .setDescription(`
-✨ **Entrega automática e segura**
+✨ Entrega automática e segura
 
 ━━━━━━━━━━━━━━
 
-📦 **Inclui:**
+📦 Inclui:
 📈 Level Max +
 🗡️ CDK
 ⚔️ TTK
@@ -44,7 +46,7 @@ client.on("messageCreate", async (message) => {
 
 ━━━━━━━━━━━━━━
 
-🍈 **Você recebe UMA dessas frutas:**
+🍈 Você recebe UMA dessas frutas:
 
 🐉 Dragon  
 🦊 Kitsune  
@@ -55,23 +57,18 @@ client.on("messageCreate", async (message) => {
 
 ━━━━━━━━━━━━━━
 
-💰 **Preço:** \`R$19,90\`  
-⚡ **Entrega imediata após pagamento**
+💰 Preço: R$19,90
+⚡ Entrega imediata
             `)
             .setImage("https://cdn.dfg.com.br/itemimages/944475148-contas-blox-fruits-kitsune-dark-blade-yoru-e-brindes-NI33.webp")
-            .setFooter({ text: "Sistema automático • Compra segura" })
+            .setFooter({ text: "Compra segura • Sistema automático" })
             .setColor("#ff0000");
 
         const buttons = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId("comprar")
-                .setLabel("🛒 Comprar Agora")
-                .setStyle(ButtonStyle.Danger),
-
-            new ButtonBuilder()
-                .setCustomId("info")
-                .setLabel("ℹ️ Informações")
-                .setStyle(ButtonStyle.Secondary)
+                .setLabel("🛒 Comprar")
+                .setStyle(ButtonStyle.Danger)
         );
 
         await message.channel.send({
@@ -87,94 +84,138 @@ client.on("interactionCreate", async (interaction) => {
 
     const guild = interaction.guild;
 
-    // BOTÃO COMPRAR
+    // ================== COMPRAR ==================
     if (interaction.customId === "comprar") {
 
-        // Evitar ticket duplicado
-        const existing = guild.channels.cache.find(c => 
-            c.name.includes(interaction.user.username)
-        );
+        await interaction.deferReply({ ephemeral: true });
 
-        if (existing) {
-            return interaction.reply({
-                content: `❌ Você já possui um ticket aberto: ${existing}`,
-                ephemeral: true
+        try {
+            const existing = guild.channels.cache.find(c =>
+                c.name.includes(interaction.user.username)
+            );
+
+            if (existing) {
+                return interaction.editReply({
+                    content: `❌ Você já tem um ticket aberto: ${existing}`
+                });
+            }
+
+            ticketCount++;
+
+            const channel = await guild.channels.create({
+                name: `ticket-${String(ticketCount).padStart(3, "0")}`,
+                type: ChannelType.GuildText,
+                permissionOverwrites: [
+                    {
+                        id: guild.id,
+                        deny: [PermissionsBitField.Flags.ViewChannel]
+                    },
+                    {
+                        id: interaction.user.id,
+                        allow: [
+                            PermissionsBitField.Flags.ViewChannel,
+                            PermissionsBitField.Flags.SendMessages
+                        ]
+                    },
+                    {
+                        id: process.env.DONO_ID,
+                        allow: [
+                            PermissionsBitField.Flags.ViewChannel,
+                            PermissionsBitField.Flags.SendMessages
+                        ]
+                    }
+                ]
+            });
+
+            const buttons = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId("pago")
+                    .setLabel("✅ Já Paguei")
+                    .setStyle(ButtonStyle.Success),
+
+                new ButtonBuilder()
+                    .setCustomId("fechar")
+                    .setLabel("🔒 Fechar Ticket")
+                    .setStyle(ButtonStyle.Secondary)
+            );
+
+            await channel.send({
+                content: `🎫 ${interaction.user}
+
+💰 Valor: R$19,90
+🔑 PIX: ${process.env.PIX}
+
+📌 Envie o comprovante ou clique em "Já Paguei".`,
+                components: [buttons]
+            });
+
+            await interaction.editReply({
+                content: `✅ Ticket criado: ${channel}`
+            });
+
+        } catch (err) {
+            console.log(err);
+
+            await interaction.editReply({
+                content: "❌ Erro ao criar ticket. Verifique permissões do bot!"
             });
         }
-
-        ticketCount++;
-
-        const channel = await guild.channels.create({
-            name: `ticket-${String(ticketCount).padStart(3, "0")}`,
-            type: ChannelType.GuildText,
-            permissionOverwrites: [
-                {
-                    id: guild.id,
-                    deny: [PermissionsBitField.Flags.ViewChannel]
-                },
-                {
-                    id: interaction.user.id,
-                    allow: [
-                        PermissionsBitField.Flags.ViewChannel,
-                        PermissionsBitField.Flags.SendMessages
-                    ]
-                },
-                {
-                    id: process.env.DONO_ID,
-                    allow: [
-                        PermissionsBitField.Flags.ViewChannel,
-                        PermissionsBitField.Flags.SendMessages
-                    ]
-                }
-            ]
-        });
-
-        const fecharBtn = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setCustomId("fechar")
-                .setLabel("🔒 Fechar Ticket")
-                .setStyle(ButtonStyle.Secondary)
-        );
-
-        await channel.send({
-            content: `🎫 Olá ${interaction.user},
-
-🛒 **Seu pedido foi iniciado!**
-
-💰 Valor: \`R$19,90\`  
-🔑 PIX: \`${process.env.PIX}\`
-
-📌 Envie o comprovante aqui para finalizar.`,
-            components: [fecharBtn]
-        });
-
-        console.log(`Ticket criado por ${interaction.user.tag}`);
-
-        await interaction.reply({
-            content: `✅ Ticket criado: ${channel}`,
-            ephemeral: true
-        });
     }
 
-    // BOTÃO FECHAR
+    // ================== PAGO ==================
+    if (interaction.customId === "pago") {
+
+        await interaction.deferReply({ ephemeral: true });
+
+        try {
+            const member = await guild.members.fetch(interaction.user.id);
+
+            await member.roles.add(process.env.CARGO_CLIENTE_ID);
+
+            await interaction.editReply({
+                content: "✅ Pagamento confirmado! Cargo entregue."
+            });
+
+        } catch (err) {
+            console.log(err);
+
+            await interaction.editReply({
+                content: "❌ Erro ao entregar cargo!"
+            });
+        }
+    }
+
+    // ================== FECHAR ==================
     if (interaction.customId === "fechar") {
 
-        await interaction.reply({
-            content: "🔒 Fechando ticket em 5 segundos...",
-            ephemeral: true
-        });
+        await interaction.deferReply({ ephemeral: true });
 
-        setTimeout(() => {
-            interaction.channel.delete();
-        }, 5000);
-    }
+        try {
+            const messages = await interaction.channel.messages.fetch({ limit: 100 });
 
-    // BOTÃO INFO
-    if (interaction.customId === "info") {
-        await interaction.reply({
-            content: "ℹ️ Após comprar, você receberá acesso rapidamente. Envie o comprovante no ticket.",
-            ephemeral: true
-        });
+            let transcript = "";
+
+            messages.reverse().forEach(msg => {
+                transcript += `${msg.author.tag}: ${msg.content}\n`;
+            });
+
+            fs.writeFileSync(`transcript-${interaction.channel.name}.txt`, transcript);
+
+            await interaction.editReply({
+                content: "📁 Transcript salvo! Fechando em 5s..."
+            });
+
+            setTimeout(() => {
+                interaction.channel.delete();
+            }, 5000);
+
+        } catch (err) {
+            console.log(err);
+
+            await interaction.editReply({
+                content: "❌ Erro ao fechar ticket!"
+            });
+        }
     }
 });
 
