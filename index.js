@@ -1,215 +1,98 @@
-const { 
-  Client, 
-  GatewayIntentBits, 
-  EmbedBuilder, 
-  ActionRowBuilder, 
-  ButtonBuilder, 
-  ButtonStyle,
-  StringSelectMenuBuilder,
-  ChannelType,
-  PermissionsBitField
-} = require('discord.js');
+import discord
+from discord.ext import commands
+import os
+import asyncio
 
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
-  ]
-});
+# Configurações via Variáveis de Ambiente (Railway)
+TOKEN = os.getenv('DISCORD_TOKEN')
+ID_CATEGORIA_TICKETS = int(os.getenv('ID_CATEGORIA'))
+DONO_ID = int(os.getenv('ID_DONO'))
 
-// BOT ONLINE
-client.once('clientReady', () => {
-  console.log(`🔥 Bot online como ${client.user.tag}`);
-});
+class TicketControl(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
 
-// COMANDO
-client.on('messageCreate', async (message) => {
+    @discord.ui.button(label="Confirmar Pagamento", style=discord.ButtonStyle.success, emoji="✅", custom_id="confirm_pay")
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Verifica se o ID de quem clicou é IGUAL ao ID do Dono configurado
+        if interaction.user.id != DONO_ID:
+            await interaction.response.send_message("❌ Apenas o dono pode confirmar este pagamento!", ephemeral=True)
+            return
 
-  if (message.author.bot) return;
+        await interaction.response.send_message(f"✅ **PAGAMENTO CONFIRMADO POR {interaction.user.mention}!**\nO produto será entregue em breve.")
+        
+        # Desabilita o botão após confirmado para evitar cliques duplos
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
-  if (message.content === '!pika') {
+    @discord.ui.button(label="Fechar Ticket", style=discord.ButtonStyle.secondary, emoji="🔒", custom_id="close_ticket")
+    async def close(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("🚨 Este ticket será deletado em 5 segundos...")
+        await asyncio.sleep(5)
+        await interaction.channel.delete()
 
-    const embed = new EmbedBuilder()
-      .setTitle('🔥😈 Adquira seu Painel BYPASS IOS FULL 😈🔥')
-      .setDescription(`
-🔥😈 **Adquira Já seu Painel BYPASS IOS FULL** 😈🔥  
+class BuyButton(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
 
-🔥 **FFH4X BYPASS IOS FULL!**  
+    @discord.ui.button(label="Comprar", style=discord.ButtonStyle.danger, emoji="🛒", custom_id="buy_button")
+    async def buy(self, interaction: discord.Interaction, button: discord.ui.Button):
+        guild = interaction.guild
+        category = guild.get_channel(ID_CATEGORIA_TICKETS)
+        
+        # Cria o canal privado do ticket
+        ticket_channel = await guild.create_text_channel(
+            name=f"🛒-{interaction.user.name}",
+            category=category,
+            overwrites={
+                guild.default_role: discord.PermissionOverwrite(view_channel=False),
+                interaction.user: discord.PermissionOverwrite(view_channel=True, send_messages=True),
+                guild.me: discord.PermissionOverwrite(view_channel=True, send_messages=True)
+            }
+        )
 
-Se você quer qualidade e resultado, esse painel é pra você.  
+        await interaction.response.send_message(f"Ticket aberto: {ticket_channel.mention}", ephemeral=True)
 
-💎 Experiência diferenciada e máxima eficiência  
+        embed_ticket = discord.Embed(
+            title="🎫 NOVO PEDIDO - BLOX FRUITS",
+            description=(
+                f"{interaction.user.mention} criou o ticket.\n\n"
+                "**Valor:** R$ 19,90\n"
+                "**Chave PIX:** `86975097500` \n\n"
+                "**Aguarde a confirmação do dono.**"
+            ),
+            color=discord.Color.red()
+        )
+        
+        await ticket_channel.send(embed=embed_ticket, view=TicketControl())
 
-🔥 **O que tem:**  
-• Aimbot Full  
-• ESPs Full  
-• Configurável  
-• Head / Neck / Chest  
+class Bot(commands.Bot):
+    def __init__(self):
+        intents = discord.Intents.default()
+        intents.message_content = True
+        super().__init__(command_prefix="!", intents=intents)
 
-💥 **Diferenciais**  
-• Funciona em todos Android 🚀  
-• Suporte + Tutorial  
+    async def setup_hook(self):
+        self.add_view(BuyButton())
+        self.add_view(TicketControl())
 
-🎮 **Ideal para:**  
-• Rank  
-• CS  
-• Jogar AP  
+bot = Bot()
 
-📥 **Você recebe:**  
-• Key no ticket  
-• Acesso a downloads  
+@bot.command()
+async def postar(ctx):
+    # Apenas o dono pode usar o comando de postar a tabela
+    if ctx.author.id != DONO_ID:
+        return
 
-🚨 Pode haver risco de blacklist  
+    embed = discord.Embed(title="COMBO PREMIUM", color=discord.Color.red())
+    embed.add_field(name="⚡ Entrega Automática!", value="🚀 LEVEL MAX +\n🥊 CDK\n⚔️ TTK\n✨ E MUITO MAIS", inline=False)
+    
+    info_items = "❗ Uma dessas\n🐉 Dragon\n🦊 Kitsune\n🐯 Tiger\n❄️ Yeti\n💨 Gás\n🍩 Dough"
+    embed.add_field(name="", value=info_items, inline=False)
+    embed.add_field(name="Valor à vista", value="R$ 19,90", inline=False)
+    
+    embed.set_image(url="https://cdn.dfg.com.br/itemimages/944475148-contas-blox-fruits-kitsune-dark-blade-yoru-e-brindes-NI33.webp")
+    
+    await ctx.send(embed=embed, view=BuyButton())
 
-📦 Entrega rápida  
-📲 Suporte antes da compra  
-
-😈🔥 **Garanta o seu agora!**
-      `)
-      .setImage('https://media.discordapp.net/attachments/1482528899903782932/1484254280088027216/file_000000008530720eb8922a615208f883.png')
-      .setColor(0x00ff88);
-
-    const botao = new ButtonBuilder()
-      .setCustomId('abrir_ticket')
-      .setLabel('Comprar Agora')
-      .setStyle(ButtonStyle.Success);
-
-    const row = new ActionRowBuilder().addComponents(botao);
-
-    message.channel.send({
-      embeds: [embed],
-      components: [row]
-    });
-  }
-});
-
-// INTERAÇÕES
-client.on('interactionCreate', async (interaction) => {
-
-  // BOTÃO COMPRAR
-  if (interaction.isButton() && interaction.customId === 'abrir_ticket') {
-
-    const select = new StringSelectMenuBuilder()
-      .setCustomId('produto')
-      .setPlaceholder('Escolha seu plano')
-      .addOptions([
-        { label: '1 dia', description: 'R$17,90', value: '17.90' },
-        { label: '7 dias', description: 'R$25,90', value: '25.90' },
-        { label: '10 dias', description: 'R$35,90', value: '35.90' },
-        { label: '30 dias', description: 'R$55,90', value: '55.90' }
-      ]);
-
-    return interaction.reply({
-      content: '📦 Escolha seu plano:',
-      components: [new ActionRowBuilder().addComponents(select)],
-      ephemeral: true
-    });
-  }
-
-  // CRIAR TICKET
-  if (interaction.isStringSelectMenu()) {
-
-    const valor = interaction.values[0];
-
-    const canal = await interaction.guild.channels.create({
-      name: `ticket-${interaction.user.username}`,
-      type: ChannelType.GuildText,
-      permissionOverwrites: [
-        {
-          id: interaction.guild.id,
-          deny: [PermissionsBitField.Flags.ViewChannel]
-        },
-        {
-          id: interaction.user.id,
-          allow: [PermissionsBitField.Flags.ViewChannel]
-        }
-      ]
-    });
-
-    const confirmar = new ButtonBuilder()
-      .setCustomId('confirmar_pagamento')
-      .setLabel('Confirmar Pagamento')
-      .setStyle(ButtonStyle.Success);
-
-    const fechar = new ButtonBuilder()
-      .setCustomId('fechar_ticket')
-      .setLabel('Fechar Ticket')
-      .setStyle(ButtonStyle.Danger);
-
-    const row = new ActionRowBuilder().addComponents(confirmar, fechar);
-
-    const embedPix = new EmbedBuilder()
-      .setTitle('💰 Pagamento via PIX')
-      .setDescription(`
-💵 Valor: R$${valor}
-
-📲 Chave PIX:
-21983873874
-
-📌 Após pagar, aguarde confirmação do dono
-      `)
-      .setColor(0x00ff88);
-
-    await canal.send({
-      content: `🎟️ Ticket de ${interaction.user}`,
-      embeds: [embedPix],
-      components: [row]
-    });
-
-    return interaction.reply({
-      content: `✅ Ticket criado: ${canal}`,
-      ephemeral: true
-    });
-  }
-
-  // CONFIRMAR PAGAMENTO
-  if (interaction.isButton() && interaction.customId === 'confirmar_pagamento') {
-
-    const dono = process.env.DONO_ID;
-
-    if (interaction.user.id != dono) {
-      return interaction.reply({
-        content: '❌ Apenas o dono pode confirmar!',
-        ephemeral: true
-      });
-    }
-
-    await interaction.channel.send(`
-✅ Pagamento confirmado!
-
-📦 Sua key será enviada aqui assim que o dono estiver online.
-⏳ Aguarde...
-    `);
-
-    await interaction.reply({
-      content: '✔️ Confirmado!',
-      ephemeral: true
-    });
-  }
-
-  // FECHAR TICKET
-  if (interaction.isButton() && interaction.customId === 'fechar_ticket') {
-
-    const dono = process.env.DONO_ID;
-
-    if (interaction.user.id != dono) {
-      return interaction.reply({
-        content: '❌ Apenas o dono pode fechar!',
-        ephemeral: true
-      });
-    }
-
-    await interaction.reply({
-      content: '🗑️ Fechando ticket...',
-      ephemeral: true
-    });
-
-    setTimeout(() => {
-      interaction.channel.delete().catch(() => {});
-    }, 2000);
-  }
-
-});
-
-client.login(process.env.TOKEN);
+bot.run(TOKEN)
