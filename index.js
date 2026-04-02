@@ -54,7 +54,10 @@ client.on("messageCreate", async (message) => {
                 .setStyle(ButtonStyle.Danger)
         );
 
-        message.channel.send({ embeds: [embed], components: [row] });
+        await message.channel.send({
+            embeds: [embed],
+            components: [row]
+        });
     }
 });
 
@@ -67,11 +70,15 @@ client.on("interactionCreate", async (interaction) => {
     // COMPRAR
     if (interaction.customId === "comprar") {
 
-        await interaction.deferReply({ ephemeral: true });
+        // responde NA HORA (resolve o "pensando...")
+        await interaction.reply({
+            content: "🛒 Criando seu ticket...",
+            ephemeral: true
+        });
 
-        // cria ticket direto (sem try/catch enchendo o saco)
+        // cria canal
         const channel = await guild.channels.create({
-            name: `ticket-${interaction.user.username}`,
+            name: `ticket-${interaction.user.username}`.replace(/[^a-zA-Z0-9-]/g, ""),
             type: ChannelType.GuildText,
             permissionOverwrites: [
                 {
@@ -95,6 +102,7 @@ client.on("interactionCreate", async (interaction) => {
             ]
         });
 
+        // botões do ticket
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId("confirmar")
@@ -107,18 +115,19 @@ client.on("interactionCreate", async (interaction) => {
                 .setStyle(ButtonStyle.Secondary)
         );
 
+        // mensagem PROFISSIONAL no ticket
         await channel.send({
             content: `${interaction.user} criou o ticket
 
-Valor: R$19,90
-Chave PIX:
+💰 **Valor:** R$19,90  
+🔑 **Chave PIX:**
 
-${process.env.PIX}`,
+\`\`\`
+${process.env.PIX}
+\`\`\`
+
+📌 Envie o comprovante para confirmar.`,
             components: [row]
-        });
-
-        await interaction.editReply({
-            content: `Ticket criado: ${channel}`
         });
     }
 
@@ -127,13 +136,17 @@ ${process.env.PIX}`,
 
         if (interaction.user.id !== process.env.DONO_ID) {
             return interaction.reply({
-                content: "Apenas o dono pode confirmar.",
+                content: "❌ Apenas o dono confirma.",
                 ephemeral: true
             });
         }
 
+        await interaction.reply({
+            content: "✅ Pagamento confirmado!",
+            ephemeral: true
+        });
+
         interaction.channel.send("✅ Pagamento confirmado!");
-        interaction.reply({ content: "Confirmado.", ephemeral: true });
     }
 
     // FECHAR (SÓ DONO)
@@ -141,13 +154,13 @@ ${process.env.PIX}`,
 
         if (interaction.user.id !== process.env.DONO_ID) {
             return interaction.reply({
-                content: "Apenas o dono pode fechar.",
+                content: "❌ Apenas o dono fecha.",
                 ephemeral: true
             });
         }
 
         await interaction.reply({
-            content: "Fechando em 3s...",
+            content: "🔒 Fechando...",
             ephemeral: true
         });
 
