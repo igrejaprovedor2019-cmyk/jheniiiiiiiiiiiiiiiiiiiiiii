@@ -18,7 +18,7 @@ const client = new Client({
 });
 
 client.once("clientReady", () => {
-    console.log(`Bot online: ${client.user.tag}`);
+    console.log("Bot online");
 });
 
 // PAINEL
@@ -28,29 +28,14 @@ client.on("messageCreate", async (message) => {
     if (message.content === "!painel") {
 
         const embed = new EmbedBuilder()
-            .setTitle("🛒 COMBO BLOX FRUITS")
-            .setDescription(`
-📈 LEVEL MAX +
-🗡️ CDK
-⚔️ TTK
-
-🍈 Frutas:
-🐉 Dragon
-🦊 Kitsune
-🐯 Tiger
-❄️ Yeti
-☁️ Gas
-🍩 Dough
-
-💰 R$19,90
-            `)
-            .setImage("https://cdn.dfg.com.br/itemimages/944475148-contas-blox-fruits-kitsune-dark-blade-yoru-e-brindes-NI33.webp")
+            .setTitle("COMBO BLOX FRUITS")
+            .setDescription("R$19,90")
             .setColor("Red");
 
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId("comprar")
-                .setLabel("🛒 Comprar")
+                .setLabel("COMPRAR")
                 .setStyle(ButtonStyle.Danger)
         );
 
@@ -61,24 +46,20 @@ client.on("messageCreate", async (message) => {
     }
 });
 
-// BOTÕES
+// BOTÃO
 client.on("interactionCreate", async (interaction) => {
     if (!interaction.isButton()) return;
 
-    const guild = interaction.guild;
-
-    // COMPRAR
     if (interaction.customId === "comprar") {
 
-        // responde NA HORA (resolve o "pensando...")
-        await interaction.reply({
-            content: "🛒 Criando seu ticket...",
-            ephemeral: true
-        });
+        const guild = interaction.guild;
+
+        // responde imediatamente (OBRIGATÓRIO)
+        await interaction.deferReply({ ephemeral: true });
 
         // cria canal
-        const channel = await guild.channels.create({
-            name: `ticket-${interaction.user.username}`.replace(/[^a-zA-Z0-9-]/g, ""),
+        const canal = await guild.channels.create({
+            name: `ticket-${interaction.user.id}`,
             type: ChannelType.GuildText,
             permissionOverwrites: [
                 {
@@ -87,86 +68,28 @@ client.on("interactionCreate", async (interaction) => {
                 },
                 {
                     id: interaction.user.id,
-                    allow: [
-                        PermissionsBitField.Flags.ViewChannel,
-                        PermissionsBitField.Flags.SendMessages
-                    ]
+                    allow: [PermissionsBitField.Flags.ViewChannel]
                 },
                 {
                     id: process.env.DONO_ID,
-                    allow: [
-                        PermissionsBitField.Flags.ViewChannel,
-                        PermissionsBitField.Flags.SendMessages
-                    ]
+                    allow: [PermissionsBitField.Flags.ViewChannel]
                 }
             ]
         });
 
-        // botões do ticket
-        const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setCustomId("confirmar")
-                .setLabel("✅ Confirmar Pagamento")
-                .setStyle(ButtonStyle.Success),
-
-            new ButtonBuilder()
-                .setCustomId("fechar")
-                .setLabel("🔒 Fechar Ticket")
-                .setStyle(ButtonStyle.Secondary)
-        );
-
-        // mensagem PROFISSIONAL no ticket
-        await channel.send({
+        // mensagem dentro do ticket
+        await canal.send({
             content: `${interaction.user} criou o ticket
 
-💰 **Valor:** R$19,90  
-🔑 **Chave PIX:**
+Valor: R$19,90
+Chave PIX:
 
-\`\`\`
-${process.env.PIX}
-\`\`\`
-
-📌 Envie o comprovante para confirmar.`,
-            components: [row]
-        });
-    }
-
-    // CONFIRMAR (SÓ DONO)
-    if (interaction.customId === "confirmar") {
-
-        if (interaction.user.id !== process.env.DONO_ID) {
-            return interaction.reply({
-                content: "❌ Apenas o dono confirma.",
-                ephemeral: true
-            });
-        }
-
-        await interaction.reply({
-            content: "✅ Pagamento confirmado!",
-            ephemeral: true
+${process.env.PIX}`
         });
 
-        interaction.channel.send("✅ Pagamento confirmado!");
-    }
-
-    // FECHAR (SÓ DONO)
-    if (interaction.customId === "fechar") {
-
-        if (interaction.user.id !== process.env.DONO_ID) {
-            return interaction.reply({
-                content: "❌ Apenas o dono fecha.",
-                ephemeral: true
-            });
-        }
-
-        await interaction.reply({
-            content: "🔒 Fechando...",
-            ephemeral: true
+        await interaction.editReply({
+            content: `Ticket: ${canal}`
         });
-
-        setTimeout(() => {
-            interaction.channel.delete();
-        }, 3000);
     }
 });
 
