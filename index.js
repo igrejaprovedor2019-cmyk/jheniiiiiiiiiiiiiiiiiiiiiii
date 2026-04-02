@@ -9,8 +9,6 @@ const {
     ChannelType
 } = require("discord.js");
 
-const fs = require("fs");
-
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -19,13 +17,11 @@ const client = new Client({
     ]
 });
 
-let ticketCount = 0;
-
 client.once("clientReady", () => {
-    console.log(`🚀 Bot online como ${client.user.tag}`);
+    console.log(`Bot online: ${client.user.tag}`);
 });
 
-// ================= PAINEL =================
+// PAINEL
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
@@ -37,20 +33,14 @@ client.on("messageCreate", async (message) => {
 📈 LEVEL MAX +
 🗡️ CDK
 ⚔️ TTK
-🔥 E MUITO MAIS
 
-━━━━━━━━━━━━━━
-
-🍈 Uma dessas:
-
-🐉 Dragon  
-🦊 Kitsune  
-🐯 Tiger  
-❄️ Yeti  
-☁️ Gas  
-🍩 Dough  
-
-━━━━━━━━━━━━━━
+🍈 Frutas:
+🐉 Dragon
+🦊 Kitsune
+🐯 Tiger
+❄️ Yeti
+☁️ Gas
+🍩 Dough
 
 💰 R$19,90
             `)
@@ -68,167 +58,102 @@ client.on("messageCreate", async (message) => {
     }
 });
 
-// ================= BOTÕES =================
+// BOTÕES
 client.on("interactionCreate", async (interaction) => {
     if (!interaction.isButton()) return;
 
     const guild = interaction.guild;
 
-    // ================= COMPRAR =================
+    // COMPRAR
     if (interaction.customId === "comprar") {
 
         await interaction.deferReply({ ephemeral: true });
 
-        try {
-            const existing = guild.channels.cache.find(c =>
-                c.topic === interaction.user.id
-            );
+        // cria ticket direto (sem try/catch enchendo o saco)
+        const channel = await guild.channels.create({
+            name: `ticket-${interaction.user.username}`,
+            type: ChannelType.GuildText,
+            permissionOverwrites: [
+                {
+                    id: guild.roles.everyone.id,
+                    deny: [PermissionsBitField.Flags.ViewChannel]
+                },
+                {
+                    id: interaction.user.id,
+                    allow: [
+                        PermissionsBitField.Flags.ViewChannel,
+                        PermissionsBitField.Flags.SendMessages
+                    ]
+                },
+                {
+                    id: process.env.DONO_ID,
+                    allow: [
+                        PermissionsBitField.Flags.ViewChannel,
+                        PermissionsBitField.Flags.SendMessages
+                    ]
+                }
+            ]
+        });
 
-            if (existing) {
-                return interaction.editReply({
-                    content: `❌ Você já possui um ticket: ${existing}`
-                });
-            }
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId("confirmar")
+                .setLabel("✅ Confirmar Pagamento")
+                .setStyle(ButtonStyle.Success),
 
-            ticketCount++;
+            new ButtonBuilder()
+                .setCustomId("fechar")
+                .setLabel("🔒 Fechar Ticket")
+                .setStyle(ButtonStyle.Secondary)
+        );
 
-            const channel = await guild.channels.create({
-                name: `ticket-${String(ticketCount).padStart(3, "0")}`,
-                type: ChannelType.GuildText,
-                topic: interaction.user.id,
-                permissionOverwrites: [
-                    {
-                        id: guild.roles.everyone.id,
-                        deny: [PermissionsBitField.Flags.ViewChannel]
-                    },
-                    {
-                        id: interaction.user.id,
-                        allow: [
-                            PermissionsBitField.Flags.ViewChannel,
-                            PermissionsBitField.Flags.SendMessages
-                        ]
-                    },
-                    {
-                        id: process.env.DONO_ID,
-                        allow: [
-                            PermissionsBitField.Flags.ViewChannel,
-                            PermissionsBitField.Flags.SendMessages
-                        ]
-                    }
-                ]
-            });
+        await channel.send({
+            content: `${interaction.user} criou o ticket
 
-            // BOTÕES DO TICKET (SÓ DONO USA)
-            const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId("confirmar")
-                    .setLabel("✅ Confirmar Pagamento")
-                    .setStyle(ButtonStyle.Success),
-
-                new ButtonBuilder()
-                    .setCustomId("fechar")
-                    .setLabel("🔒 Fechar Ticket")
-                    .setStyle(ButtonStyle.Secondary)
-            );
-
-            // 🔥 MENSAGEM EXATA QUE VOCÊ PEDIU
-            await channel.send({
-                content: `${interaction.user} criou o ticket
-
-Valor: R$19,90  
+Valor: R$19,90
 Chave PIX:
 
 ${process.env.PIX}`,
-                components: [row]
-            });
+            components: [row]
+        });
 
-            await interaction.editReply({
-                content: `✅ Ticket criado: ${channel}`
-            });
-
-        } catch (err) {
-            console.log("ERRO REAL:", err);
-
-            await interaction.editReply({
-                content: "❌ Erro ao criar ticket."
-            });
-        }
+        await interaction.editReply({
+            content: `Ticket criado: ${channel}`
+        });
     }
 
-    // ================= CONFIRMAR PAGAMENTO (SÓ DONO) =================
+    // CONFIRMAR (SÓ DONO)
     if (interaction.customId === "confirmar") {
 
         if (interaction.user.id !== process.env.DONO_ID) {
             return interaction.reply({
-                content: "❌ Apenas o dono pode confirmar pagamento.",
+                content: "Apenas o dono pode confirmar.",
                 ephemeral: true
             });
         }
 
-        await interaction.deferReply({ ephemeral: true });
-
-        try {
-            const userId = interaction.channel.topic;
-
-            const member = await guild.members.fetch(userId);
-
-            if (process.env.CARGO_CLIENTE_ID) {
-                await member.roles.add(process.env.CARGO_CLIENTE_ID);
-            }
-
-            await interaction.channel.send(`✅ Pagamento confirmado para ${member}`);
-
-            await interaction.editReply({
-                content: "Pagamento confirmado!"
-            });
-
-        } catch (err) {
-            console.log(err);
-
-            await interaction.editReply({
-                content: "Erro ao confirmar pagamento."
-            });
-        }
+        interaction.channel.send("✅ Pagamento confirmado!");
+        interaction.reply({ content: "Confirmado.", ephemeral: true });
     }
 
-    // ================= FECHAR (SÓ DONO) =================
+    // FECHAR (SÓ DONO)
     if (interaction.customId === "fechar") {
 
         if (interaction.user.id !== process.env.DONO_ID) {
             return interaction.reply({
-                content: "❌ Apenas o dono pode fechar.",
+                content: "Apenas o dono pode fechar.",
                 ephemeral: true
             });
         }
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.reply({
+            content: "Fechando em 3s...",
+            ephemeral: true
+        });
 
-        try {
-            const messages = await interaction.channel.messages.fetch({ limit: 100 });
-
-            let transcript = "";
-
-            messages.reverse().forEach(msg => {
-                transcript += `${msg.author.tag}: ${msg.content}\n`;
-            });
-
-            fs.writeFileSync(`transcript-${interaction.channel.name}.txt`, transcript);
-
-            await interaction.editReply({
-                content: "📁 Ticket fechado em 5s..."
-            });
-
-            setTimeout(() => {
-                interaction.channel.delete();
-            }, 5000);
-
-        } catch (err) {
-            console.log(err);
-
-            await interaction.editReply({
-                content: "Erro ao fechar ticket."
-            });
-        }
+        setTimeout(() => {
+            interaction.channel.delete();
+        }, 3000);
     }
 });
 
