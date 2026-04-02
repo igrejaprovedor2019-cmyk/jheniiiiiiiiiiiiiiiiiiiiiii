@@ -1,12 +1,6 @@
-const {
-    Client,
-    GatewayIntentBits,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-    EmbedBuilder,
-    PermissionsBitField,
-    ChannelType
+const { 
+    Client, GatewayIntentBits, ActionRowBuilder, ButtonBuilder, 
+    ButtonStyle, EmbedBuilder, PermissionsBitField, ChannelType 
 } = require("discord.js");
 
 const client = new Client({
@@ -17,159 +11,92 @@ const client = new Client({
     ]
 });
 
-client.once("clientReady", () => {
-    console.log(`✅ Bot online: ${client.user.tag}`);
+// Configurações via Railway (Variables)
+const TOKEN = process.env.TOKEN;
+const DONO_ID = process.env.DONO_ID;
+const PIX = process.env.PIX;
+const LOG_VENDAS = process.env.LOG_VENDAS; // ID de um canal para você receber avisos
+
+client.once("ready", () => {
+    console.log(`🚀 SISTEMA CLUBE SIRIUS ONLINE: ${client.user.tag}`);
 });
 
-// ================= COMANDO !painel =================
 client.on("messageCreate", async (message) => {
-    if (message.author.bot) return;
+    if (message.author.bot || message.content !== "!painel") return;
+    if (message.author.id !== DONO_ID) return;
 
-    if (message.content === "!painel") {
+    const embed = new EmbedBuilder()
+        .setTitle("🔥 COMBO PREMIUM - BLOX FRUITS")
+        .setDescription("```\n🚀 LEVEL MAX\n🥊 CDK & TTK\n🍎 FRUTA MÍTICA GARANTIDA\n```\n**Clique no botão abaixo para garantir o seu agora!**")
+        .addFields({ name: "💰 Preço Único", value: "R$ 19,90", inline: true })
+        .setImage("https://cdn.dfg.com.br/itemimages/944475148-contas-blox-fruits-kitsune-dark-blade-yoru-e-brindes-NI33.webp")
+        .setColor("#ff0000")
+        .setFooter({ text: "Clube Sirius - O melhor do Blox Fruits" });
 
-        const embed = new EmbedBuilder()
-            .setTitle("🛒 COMBO BLOX FRUITS")
-            .setDescription(`
-📈 LEVEL MAX +
-🗡️ CDK
-⚔️ TTK
+    const btn = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId("buy").setLabel("ADQUIRIR COMBO").setEmoji("🛒").setStyle(ButtonStyle.Danger)
+    );
 
-🍈 Frutas:
-🐉 Dragon
-🦊 Kitsune
-🐯 Tiger
-❄️ Yeti
-☁️ Gas
-🍩 Dough
-
-💰 R$19,90
-            `)
-            .setImage("https://cdn.dfg.com.br/itemimages/944475148-contas-blox-fruits-kitsune-dark-blade-yoru-e-brindes-NI33.webp")
-            .setColor("Red");
-
-        const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setCustomId("comprar")
-                .setLabel("🛒 Comprar")
-                .setStyle(ButtonStyle.Danger)
-        );
-
-        await message.channel.send({
-            embeds: [embed],
-            components: [row]
-        });
-    }
+    await message.channel.send({ embeds: [embed], components: [btn] });
+    await message.delete().catch(() => {}); 
 });
 
-// ================= BOTÕES =================
 client.on("interactionCreate", async (interaction) => {
     if (!interaction.isButton()) return;
 
-    const { guild, user, customId, channel } = interaction;
-
-    // ================= COMPRAR =================
-    if (customId === "comprar") {
+    // ABRIR TICKET
+    if (interaction.customId === "buy") {
+        // Verifica se já tem um ticket aberto com esse nome (Anti-Flood)
+        const jaExiste = interaction.guild.channels.cache.find(c => c.name === `ticket-${interaction.user.username}`);
+        if (jaExiste) return interaction.reply({ content: `❌ Você já tem um ticket aberto: ${jaExiste}`, ephemeral: true });
 
         await interaction.deferReply({ ephemeral: true });
 
-        try {
-            // nome seguro
-            const nome = user.username
-                .replace(/[^a-zA-Z0-9]/g, "")
-                .toLowerCase();
+        const ticket = await interaction.guild.channels.create({
+            name: `ticket-${interaction.user.username}`,
+            type: ChannelType.GuildText,
+            permissionOverwrites: [
+                { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+                { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.AttachFiles] },
+                { id: DONO_ID, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }
+            ]
+        });
 
-            const ticket = await guild.channels.create({
-                name: `ticket-${nome}`,
-                type: ChannelType.GuildText,
-                permissionOverwrites: [
-                    {
-                        id: guild.roles.everyone.id,
-                        deny: [PermissionsBitField.Flags.ViewChannel]
-                    },
-                    {
-                        id: user.id,
-                        allow: [
-                            PermissionsBitField.Flags.ViewChannel,
-                            PermissionsBitField.Flags.SendMessages
-                        ]
-                    },
-                    {
-                        id: process.env.DONO_ID,
-                        allow: [
-                            PermissionsBitField.Flags.ViewChannel,
-                            PermissionsBitField.Flags.SendMessages
-                        ]
-                    }
-                ]
-            });
+        const ticketEmbed = new EmbedBuilder()
+            .setTitle("🎫 TICKET DE COMPRA")
+            .setThumbnail(interaction.user.displayAvatarURL())
+            .setDescription(`Olá **${interaction.user.username}**!\n\nPara completar sua compra, realize o PIX abaixo:\n\n**VALOR:** \`R$ 19,90\`\n**CHAVE PIX:** \`${PIX}\``)
+            .setColor("#00ff00")
+            .setFooter({ text: "Aguarde o dono confirmar após o envio do comprovante." });
 
-            const rowTicket = new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId("confirmar")
-                    .setLabel("✅ Confirmar Pagamento")
-                    .setStyle(ButtonStyle.Success),
+        const ticketBtns = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId("done").setLabel("PAGUEI").setStyle(ButtonStyle.Success),
+            new ButtonBuilder().setCustomId("close").setLabel("FECHAR").setStyle(ButtonStyle.Secondary)
+        );
 
-                new ButtonBuilder()
-                    .setCustomId("fechar")
-                    .setLabel("🔒 Fechar Ticket")
-                    .setStyle(ButtonStyle.Secondary)
-            );
+        await ticket.send({ content: `<@${interaction.user.id}> | <@${DONO_ID}>`, embeds: [ticketEmbed], components: [ticketBtns] });
+        await interaction.editReply({ content: `✅ Canal criado: ${ticket}` });
 
-            await ticket.send({
-                content: `${user} criou o ticket
-
-Valor: R$19,90
-Chave PIX:
-
-${process.env.PIX}`,
-                components: [rowTicket]
-            });
-
-            await interaction.editReply({
-                content: `✅ Ticket criado: ${ticket}`
-            });
-
-        } catch (err) {
-            console.log("ERRO REAL:", err);
+        // Envia Log para o Dono
+        if (LOG_VENDAS) {
+            const logChan = interaction.guild.channels.cache.get(LOG_VENDAS);
+            if (logChan) logChan.send(`🔔 **Novo Ticket:** ${interaction.user.tag} abriu um canal de compra.`);
         }
     }
 
-    // ================= CONFIRMAR =================
-    if (customId === "confirmar") {
-
-        if (user.id !== process.env.DONO_ID) {
-            return interaction.reply({
-                content: "❌ Apenas o dono pode confirmar.",
-                ephemeral: true
-            });
-        }
-
-        await channel.send("✅ Pagamento confirmado!");
-        await interaction.reply({
-            content: "Confirmado.",
-            ephemeral: true
-        });
+    // CONFIRMAR (SÓ DONO)
+    if (interaction.customId === "done") {
+        if (interaction.user.id !== DONO_ID) return interaction.reply({ content: "Aguarde o dono confirmar seu pagamento.", ephemeral: true });
+        await interaction.channel.send("✅ **PAGAMENTO CONFIRMADO!** O dono entrará em contato agora.");
+        await interaction.reply({ content: "Confirmado.", ephemeral: true });
     }
 
-    // ================= FECHAR =================
-    if (customId === "fechar") {
-
-        if (user.id !== process.env.DONO_ID) {
-            return interaction.reply({
-                content: "❌ Apenas o dono pode fechar.",
-                ephemeral: true
-            });
-        }
-
-        await interaction.reply({
-            content: "🔒 Fechando...",
-            ephemeral: true
-        });
-
-        setTimeout(() => {
-            channel.delete().catch(() => {});
-        }, 3000);
+    // FECHAR (SÓ DONO)
+    if (interaction.customId === "close") {
+        if (interaction.user.id !== DONO_ID) return interaction.reply({ content: "Apenas o dono pode fechar este canal.", ephemeral: true });
+        await interaction.reply("🔒 Fechando em 5 segundos...");
+        setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
     }
 });
 
-client.login(process.env.TOKEN);
+client.login(TOKEN);
