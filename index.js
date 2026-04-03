@@ -24,16 +24,10 @@ const PREFIX = '!';
 
 let chavePix = 'NÃO DEFINIDA';
 
-// =====================
-// ONLINE
-// =====================
 client.once(Events.ClientReady, () => {
   console.log(`✅ Online como ${client.user.tag}`);
 });
 
-// =====================
-// COMANDOS
-// =====================
 client.on(Events.MessageCreate, async message => {
   if (!message.guild || message.author.bot) return;
 
@@ -46,9 +40,9 @@ client.on(Events.MessageCreate, async message => {
   }
 
   // CRIAR SERVIDOR
-  if (message.content === `${PREFIX}painel`) {
+  if (message.content === '!painel') {
 
-    await message.reply('🚀 Criando servidor...');
+    await message.reply('🚀 Criando servidor completo...');
 
     const guild = message.guild;
 
@@ -56,7 +50,6 @@ client.on(Events.MessageCreate, async message => {
     // CARGOS
     // =====================
     const verificado = await guild.roles.create({ name: '✔️ VERIFICADO' });
-
     await guild.roles.create({ name: '👑 DONO' });
     await guild.roles.create({ name: '👑 SUB DONO' });
     await guild.roles.create({ name: 'GERENTE' });
@@ -65,11 +58,28 @@ client.on(Events.MessageCreate, async message => {
     await guild.roles.everyone.setPermissions([]);
 
     // =====================
+    // INÍCIO
+    // =====================
+    const inicio = await guild.channels.create({ name: 'Início / Recepção', type: ChannelType.GuildCategory });
+
+    await guild.channels.create({ name: '👾 boas-vindas', parent: inicio.id });
+    await guild.channels.create({ name: '📢 ‼️ avisos!', parent: inicio.id });
+    await guild.channels.create({ name: '📜 termon', parent: inicio.id });
+
+    // =====================
+    // COMUNIDADE
+    // =====================
+    const comunidade = await guild.channels.create({ name: '【 COMUNIDADE 】', type: ChannelType.GuildCategory });
+
+    await guild.channels.create({ name: '🛒・como-adquirir', parent: comunidade.id });
+    await guild.channels.create({ name: '😈・seja-da-nossa-equipe', parent: comunidade.id });
+
+    // =====================
     // VERIFICAÇÃO
     // =====================
     const verificacao = await guild.channels.create({
       name: '🔐・verificação',
-      type: ChannelType.GuildText,
+      parent: comunidade.id,
       permissionOverwrites: [
         { id: guild.roles.everyone, allow: [PermissionsBitField.Flags.ViewChannel] }
       ]
@@ -97,7 +107,6 @@ client.on(Events.MessageCreate, async message => {
 
     await guild.channels.create({
       name: '🗨️・geral',
-      type: 0,
       parent: geral.id,
       permissionOverwrites: [
         { id: guild.roles.everyone, deny: [PermissionsBitField.Flags.ViewChannel] },
@@ -105,46 +114,54 @@ client.on(Events.MessageCreate, async message => {
       ]
     });
 
-    const canaisVenda = [];
+    // =====================
+    // ANDROID
+    // =====================
+    const android = await guild.channels.create({ name: '📱 FFH4X ANDROID', type: ChannelType.GuildCategory });
+
+    const apk = await guild.channels.create({ name: '🏅・apk-mod-android', parent: geral.id });
+    const contas = await guild.channels.create({ name: '🏅・contas-ghost-ff', parent: android.id });
+    const holo = await guild.channels.create({ name: '🏅・holograma-android', parent: android.id });
+    const drip = await guild.channels.create({ name: '🏅・drip-cliente', parent: android.id });
 
     // =====================
-    // CRIAR CANAIS VENDA
+    // IOS
     // =====================
-    async function criarCanal(nome, categoria) {
-      const canal = await guild.channels.create({
-        name: nome,
-        type: 0,
-        parent: categoria.id,
-        permissionOverwrites: [
-          { id: guild.roles.everyone, deny: [PermissionsBitField.Flags.ViewChannel] },
-          { id: verificado.id, allow: [PermissionsBitField.Flags.ViewChannel] }
-        ]
-      });
-      canaisVenda.push(canal);
-      return canal;
-    }
+    const ios = await guild.channels.create({ name: '🍎 FFH4X IOS', type: ChannelType.GuildCategory });
 
-    const android = await guild.channels.create({ name: '📱 ANDROID', type: ChannelType.GuildCategory });
-    const ios = await guild.channels.create({ name: '🍎 IOS', type: ChannelType.GuildCategory });
-
-    const apk = await criarCanal('apk-mod-android', android);
-    const drip = await criarCanal('drip-cliente', android);
-
-    const rage = await criarCanal('iphone-rage', ios);
-    const safe = await criarCanal('iphone-safe', ios);
-    const bypass = await criarCanal('bypass-full', ios);
-    const wifi = await criarCanal('wifi', ios);
+    const rage = await guild.channels.create({ name: '🏅・iphone-rage', parent: ios.id });
+    const safe = await guild.channels.create({ name: '🏅・iphone-safe', parent: ios.id });
+    const bypass = await guild.channels.create({ name: '🏅・bypass-full', parent: ios.id });
+    const wifi = await guild.channels.create({ name: '🏅・hs-wifi', parent: ios.id });
 
     // =====================
-    // PAINEL
+    // SUPORTE
+    // =====================
+    const suporte = await guild.channels.create({ name: '🎟️ suporte', type: ChannelType.GuildCategory });
+
+    await guild.channels.create({ name: '🎟️・suporte', parent: suporte.id });
+    await guild.channels.create({ name: 'ATENDIMENTO 1', type: 2, parent: suporte.id });
+    await guild.channels.create({ name: 'ATENDIMENTO 2', type: 2, parent: suporte.id });
+    await guild.channels.create({ name: 'ATENDIMENTO 3', type: 2, parent: suporte.id });
+
+    // =====================
+    // CALLS
+    // =====================
+    const calls = await guild.channels.create({ name: '🔊 CALLS', type: ChannelType.GuildCategory });
+
+    await guild.channels.create({ name: 'Geral 1', type: 2, parent: calls.id });
+    await guild.channels.create({ name: 'Geral 2', type: 2, parent: calls.id });
+    await guild.channels.create({ name: 'Suporte 1', type: 2, parent: calls.id });
+    await guild.channels.create({ name: 'Suporte 2', type: 2, parent: calls.id });
+
+    // =====================
+    // PAINEL DE VENDA
     // =====================
     async function painel(canal, nome) {
-
       const embed = new EmbedBuilder()
         .setColor('#a020f0')
         .setTitle(`🔥😈 Adquira Já seu Painel ${nome} 😈🔥`)
-        .setDescription(`
-🔥 ${nome}!
+        .setDescription(`🔥 ${nome}!
 
 Se você quer qualidade e resultado, esse painel é pra você.
 
@@ -174,8 +191,7 @@ Se você quer qualidade e resultado, esse painel é pra você.
 📦 Entrega rápida
 📲 Suporte antes da compra
 
-😈🔥 Garanta o seu agora!
-`)
+😈🔥 Garanta o seu agora!`)
         .setImage('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQC7vNX0Nd8YF3uAA1R8nUyKV1H-6Lym9U9DQ&s');
 
       const btn = new ButtonBuilder()
@@ -196,7 +212,7 @@ Se você quer qualidade e resultado, esse painel é pra você.
     await painel(bypass, 'BYPASS FULL');
     await painel(wifi, 'HS WIFI');
 
-    message.reply('✅ Servidor pronto!');
+    message.reply('✅ Servidor COMPLETO criado!');
   }
 });
 
@@ -205,56 +221,54 @@ Se você quer qualidade e resultado, esse painel é pra você.
 // =====================
 client.on(Events.InteractionCreate, async interaction => {
 
-  // VERIFICAÇÃO
-  if (interaction.isButton() && interaction.customId === 'verificar') {
-    const cargo = interaction.guild.roles.cache.find(r => r.name === '✔️ VERIFICADO');
-    await interaction.member.roles.add(cargo);
+  if (interaction.isButton()) {
 
-    return interaction.reply({ content: '✅ Acesso liberado!', ephemeral: true });
+    if (interaction.customId === 'verificar') {
+      const cargo = interaction.guild.roles.cache.find(r => r.name === '✔️ VERIFICADO');
+      await interaction.member.roles.add(cargo);
+      return interaction.reply({ content: '✅ Acesso liberado!', ephemeral: true });
+    }
+
+    if (interaction.customId.startsWith('comprar_')) {
+      const id = interaction.customId.split('_')[1];
+
+      const menu = new StringSelectMenuBuilder()
+        .setCustomId(`plano_${id}`)
+        .addOptions([
+          { label: '1 DIA - 17,99', value: '1 DIA' },
+          { label: '3 DIAS - 27,99', value: '3 DIAS' },
+          { label: '7 DIAS - 40', value: '7 DIAS' },
+          { label: '30 DIAS - 85', value: '30 DIAS' }
+        ]);
+
+      return interaction.reply({
+        content: 'Escolha o plano:',
+        components: [new ActionRowBuilder().addComponents(menu)],
+        ephemeral: true
+      });
+    }
+
+    if (interaction.customId === 'confirmar') {
+      const permitido = ['👑 DONO', '👑 SUB DONO', 'GERENTE'];
+      const ok = interaction.member.roles.cache.some(r => permitido.includes(r.name));
+
+      if (!ok) return interaction.reply({ content: '❌ Sem permissão!', ephemeral: true });
+
+      return interaction.reply('✅ Pagamento confirmado!');
+    }
   }
 
-  // COMPRAR
-  if (interaction.isButton() && interaction.customId.startsWith('comprar_')) {
-
-    const canalID = interaction.customId.split('_')[1];
-
-    const menu = new StringSelectMenuBuilder()
-      .setCustomId(`plano_${canalID}`)
-      .setPlaceholder('Escolha o plano')
-      .addOptions([
-        { label: '1 DIA - 17,99', value: '1 DIA' },
-        { label: '3 DIAS - 27,99', value: '3 DIAS' },
-        { label: '7 DIAS - 40', value: '7 DIAS' },
-        { label: '30 DIAS - 85', value: '30 DIAS' }
-      ]);
-
-    return interaction.reply({
-      content: 'Selecione seu plano:',
-      components: [new ActionRowBuilder().addComponents(menu)],
-      ephemeral: true
-    });
-  }
-
-  // CRIAR TICKET
   if (interaction.isStringSelectMenu()) {
-
-    const canalID = interaction.customId.split('_')[1];
+    const id = interaction.customId.split('_')[1];
     const plano = interaction.values[0];
-
-    const canal = interaction.guild.channels.cache.get(canalID);
+    const canal = interaction.guild.channels.cache.get(id);
 
     const embed = new EmbedBuilder()
-      .setTitle('🛒 Carrinho de Compras')
-      .setDescription(`
-🛒 Produto selecionado
-Plano: ${plano}
+      .setTitle('🛒 Carrinho')
+      .setDescription(`Plano: ${plano}
 
-💸 Valor:
-R$ XX
-
-📋 Chave PIX:
-${chavePix}
-`);
+PIX:
+${chavePix}`);
 
     const btn = new ButtonBuilder()
       .setCustomId('confirmar')
@@ -269,21 +283,6 @@ ${chavePix}
 
     return interaction.reply({ content: '✅ Pedido enviado!', ephemeral: true });
   }
-
-  // CONFIRMAR
-  if (interaction.isButton() && interaction.customId === 'confirmar') {
-
-    const permitido = ['👑 DONO', '👑 SUB DONO', 'GERENTE'];
-
-    const ok = interaction.member.roles.cache.some(r => permitido.includes(r.name));
-
-    if (!ok) {
-      return interaction.reply({ content: '❌ Sem permissão!', ephemeral: true });
-    }
-
-    return interaction.reply('✅ Pagamento confirmado!');
-  }
-
 });
 
 client.login(TOKEN);
