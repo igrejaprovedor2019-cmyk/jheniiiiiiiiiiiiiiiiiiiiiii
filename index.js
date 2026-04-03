@@ -20,7 +20,6 @@ const client = new Client({
 });
 
 const TOKEN = process.env.TOKEN;
-const PREFIX = '!';
 
 let chavePix = 'NÃO DEFINIDA';
 
@@ -28,6 +27,9 @@ client.once(Events.ClientReady, () => {
   console.log(`✅ Online como ${client.user.tag}`);
 });
 
+// =====================
+// COMANDOS
+// =====================
 client.on(Events.MessageCreate, async message => {
   if (!message.guild || message.author.bot) return;
 
@@ -35,6 +37,7 @@ client.on(Events.MessageCreate, async message => {
   if (message.content.startsWith('!chave')) {
     const chave = message.content.split(' ').slice(1).join(' ');
     if (!chave) return message.reply('❌ Coloque a chave PIX');
+
     chavePix = chave;
     return message.reply('✅ Chave PIX salva!');
   }
@@ -42,9 +45,9 @@ client.on(Events.MessageCreate, async message => {
   // CRIAR SERVIDOR
   if (message.content === '!painel') {
 
-    await message.reply('🚀 Criando servidor completo...');
-
     const guild = message.guild;
+
+    await message.reply('🚀 Criando servidor completo...');
 
     // =====================
     // CARGOS
@@ -54,7 +57,6 @@ client.on(Events.MessageCreate, async message => {
     await guild.roles.create({ name: '👑 SUB DONO' });
     await guild.roles.create({ name: 'GERENTE' });
 
-    // BLOQUEAR TUDO
     await guild.roles.everyone.setPermissions([]);
 
     // =====================
@@ -62,8 +64,8 @@ client.on(Events.MessageCreate, async message => {
     // =====================
     const inicio = await guild.channels.create({ name: 'Início / Recepção', type: ChannelType.GuildCategory });
 
-    await guild.channels.create({ name: '👾 boas-vindas', parent: inicio.id });
-    await guild.channels.create({ name: '📢 ‼️ avisos!', parent: inicio.id });
+    await guild.channels.create({ name: '👾 boas-vindaꜱ', parent: inicio.id });
+    await guild.channels.create({ name: '📢 ‼️ αvιѕoѕ!', parent: inicio.id });
     await guild.channels.create({ name: '📜 termon', parent: inicio.id });
 
     // =====================
@@ -71,14 +73,12 @@ client.on(Events.MessageCreate, async message => {
     // =====================
     const comunidade = await guild.channels.create({ name: '【 COMUNIDADE 】', type: ChannelType.GuildCategory });
 
-    await guild.channels.create({ name: '🛒・como-adquirir', parent: comunidade.id });
-    await guild.channels.create({ name: '😈・seja-da-nossa-equipe', parent: comunidade.id });
+    await guild.channels.create({ name: '🛒・coмo・αdquιrιr', parent: comunidade.id });
+    await guild.channels.create({ name: '😈・ѕejα-dα-noѕѕα-equιpe', parent: comunidade.id });
 
-    // =====================
     // VERIFICAÇÃO
-    // =====================
     const verificacao = await guild.channels.create({
-      name: '🔐・verificação',
+      name: '🔐・verιfιcαçὰo',
       parent: comunidade.id,
       permissionOverwrites: [
         { id: guild.roles.everyone, allow: [PermissionsBitField.Flags.ViewChannel] }
@@ -88,7 +88,7 @@ client.on(Events.MessageCreate, async message => {
     const embedVer = new EmbedBuilder()
       .setColor('#a020f0')
       .setTitle('✅ Verificação')
-      .setDescription('Clique no botão para liberar o servidor');
+      .setDescription('Clique para liberar o servidor');
 
     const btnVer = new ButtonBuilder()
       .setCustomId('verificar')
@@ -103,10 +103,10 @@ client.on(Events.MessageCreate, async message => {
     // =====================
     // GERAL
     // =====================
-    const geral = await guild.channels.create({ name: '🗨️ geral', type: ChannelType.GuildCategory });
+    const geral = await guild.channels.create({ name: '🗨️ gαrαl', type: ChannelType.GuildCategory });
 
     await guild.channels.create({
-      name: '🗨️・geral',
+      name: '🗨️・gerαl',
       parent: geral.id,
       permissionOverwrites: [
         { id: guild.roles.everyone, deny: [PermissionsBitField.Flags.ViewChannel] },
@@ -114,32 +114,33 @@ client.on(Events.MessageCreate, async message => {
       ]
     });
 
+    const apk = await guild.channels.create({ name: '🏅・αpk-mod-αndroιd', parent: geral.id });
+
     // =====================
     // ANDROID
     // =====================
     const android = await guild.channels.create({ name: '📱 FFH4X ANDROID', type: ChannelType.GuildCategory });
 
-    const apk = await guild.channels.create({ name: '🏅・apk-mod-android', parent: geral.id });
-    const contas = await guild.channels.create({ name: '🏅・contas-ghost-ff', parent: android.id });
-    const holo = await guild.channels.create({ name: '🏅・holograma-android', parent: android.id });
-    const drip = await guild.channels.create({ name: '🏅・drip-cliente', parent: android.id });
+    const contas = await guild.channels.create({ name: '🏅・contαѕ-ghoѕt-ff', parent: android.id });
+    const holo = await guild.channels.create({ name: '🏅 hologrαmα-αndroιd', parent: android.id });
+    const drip = await guild.channels.create({ name: '🏅・drιp-clιente', parent: android.id });
 
     // =====================
     // IOS
     // =====================
     const ios = await guild.channels.create({ name: '🍎 FFH4X IOS', type: ChannelType.GuildCategory });
 
-    const rage = await guild.channels.create({ name: '🏅・iphone-rage', parent: ios.id });
-    const safe = await guild.channels.create({ name: '🏅・iphone-safe', parent: ios.id });
-    const bypass = await guild.channels.create({ name: '🏅・bypass-full', parent: ios.id });
-    const wifi = await guild.channels.create({ name: '🏅・hs-wifi', parent: ios.id });
+    const rage = await guild.channels.create({ name: '🏅・ιphone-rαge', parent: ios.id });
+    const safe = await guild.channels.create({ name: '🏅・ιphone-ѕαfe', parent: ios.id });
+    const bypass = await guild.channels.create({ name: '🏅・ʙypαѕѕ-full', parent: ios.id });
+    const wifi = await guild.channels.create({ name: '🏅・hѕ-wιfι', parent: ios.id });
 
     // =====================
     // SUPORTE
     // =====================
-    const suporte = await guild.channels.create({ name: '🎟️ suporte', type: ChannelType.GuildCategory });
+    const suporte = await guild.channels.create({ name: '🎟️・ѕupoʀte', type: ChannelType.GuildCategory });
 
-    await guild.channels.create({ name: '🎟️・suporte', parent: suporte.id });
+    await guild.channels.create({ name: '🎟️・𝓼𝓾𝓹𝓸𝓻𝓽𝓮', parent: suporte.id });
     await guild.channels.create({ name: 'ATENDIMENTO 1', type: 2, parent: suporte.id });
     await guild.channels.create({ name: 'ATENDIMENTO 2', type: 2, parent: suporte.id });
     await guild.channels.create({ name: 'ATENDIMENTO 3', type: 2, parent: suporte.id });
@@ -155,7 +156,23 @@ client.on(Events.MessageCreate, async message => {
     await guild.channels.create({ name: 'Suporte 2', type: 2, parent: calls.id });
 
     // =====================
-    // PAINEL DE VENDA
+    // DOWNLOADS
+    // =====================
+    const downloads = await guild.channels.create({ name: 'LINK DOS XITS 👇', type: ChannelType.GuildCategory });
+
+    const d1 = await guild.channels.create({ name: '🔐・dowload-android', parent: downloads.id });
+    const d2 = await guild.channels.create({ name: '🔐・dowload-ios', parent: downloads.id });
+    const d3 = await guild.channels.create({ name: '🔐・dowload-wifi', parent: downloads.id });
+    const d4 = await guild.channels.create({ name: '🔐・dowload-drip', parent: downloads.id });
+
+    // =====================
+    // CALL VIP
+    // =====================
+    const vip = await guild.channels.create({ name: '↳ CALL ATENDIMENTO', type: ChannelType.GuildCategory });
+    await guild.channels.create({ name: 'CALL ATENDIMENTO VIP', type: 2, parent: vip.id });
+
+    // =====================
+    // PAINEL
     // =====================
     async function painel(canal, nome) {
       const embed = new EmbedBuilder()
@@ -212,7 +229,7 @@ Se você quer qualidade e resultado, esse painel é pra você.
     await painel(bypass, 'BYPASS FULL');
     await painel(wifi, 'HS WIFI');
 
-    message.reply('✅ Servidor COMPLETO criado!');
+    message.reply('✅ Servidor 100% criado!');
   }
 });
 
@@ -226,7 +243,7 @@ client.on(Events.InteractionCreate, async interaction => {
     if (interaction.customId === 'verificar') {
       const cargo = interaction.guild.roles.cache.find(r => r.name === '✔️ VERIFICADO');
       await interaction.member.roles.add(cargo);
-      return interaction.reply({ content: '✅ Acesso liberado!', ephemeral: true });
+      return interaction.reply({ content: '✅ Liberado!', ephemeral: true });
     }
 
     if (interaction.customId.startsWith('comprar_')) {
@@ -264,7 +281,7 @@ client.on(Events.InteractionCreate, async interaction => {
     const canal = interaction.guild.channels.cache.get(id);
 
     const embed = new EmbedBuilder()
-      .setTitle('🛒 Carrinho')
+      .setTitle('🛒 Carrinho de Compras')
       .setDescription(`Plano: ${plano}
 
 PIX:
