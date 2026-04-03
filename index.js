@@ -33,7 +33,6 @@ client.once(Events.ClientReady, () => {
 client.on(Events.MessageCreate, async message => {
   if (!message.guild || message.author.bot) return;
 
-  // CHAVE PIX
   if (message.content.startsWith('!chave')) {
     const chave = message.content.split(' ').slice(1).join(' ');
     if (!chave) return message.reply('❌ Coloque a chave PIX');
@@ -42,7 +41,6 @@ client.on(Events.MessageCreate, async message => {
     return message.reply('✅ Chave PIX salva!');
   }
 
-  // CRIAR SERVIDOR
   if (message.content === '!painel') {
 
     const guild = message.guild;
@@ -50,33 +48,48 @@ client.on(Events.MessageCreate, async message => {
     await message.reply('🚀 Criando servidor completo...');
 
     // =====================
-    // CARGOS
+    // 🎭 CARGOS (CORES)
     // =====================
-    const verificado = await guild.roles.create({ name: '✔️ VERIFICADO' });
-    await guild.roles.create({ name: '👑 DONO' });
-    await guild.roles.create({ name: '👑 SUB DONO' });
-    await guild.roles.create({ name: 'GERENTE' });
+    const verificado = await guild.roles.create({ name: '✔️ VERIFICADO', color: '#00ff00' });
 
+    await guild.roles.create({ name: '👑 DONO', color: '#000000' });
+    await guild.roles.create({ name: '👑 SUB DONO', color: '#000000' });
+    await guild.roles.create({ name: 'GERENTE', color: '#ff0000' });
+
+    await guild.roles.create({ name: 'CLIENTE ANDROID', color: '#00b0f4' });
+    await guild.roles.create({ name: 'CLIENTE IOS', color: '#ff00ff' });
+    await guild.roles.create({ name: 'CLIENTE WIFI', color: '#ffff00' });
+    await guild.roles.create({ name: 'CLIENTE DRIP', color: '#ff8800' });
+
+    // BLOQUEAR TUDO
     await guild.roles.everyone.setPermissions([]);
+
+    // FUNÇÃO CANAL PRIVADO
+    function privado(parent) {
+      return [
+        { id: guild.roles.everyone, deny: [PermissionsBitField.Flags.ViewChannel] },
+        { id: verificado.id, allow: [PermissionsBitField.Flags.ViewChannel] }
+      ];
+    }
 
     // =====================
     // INÍCIO
     // =====================
     const inicio = await guild.channels.create({ name: 'Início / Recepção', type: ChannelType.GuildCategory });
 
-    await guild.channels.create({ name: '👾 boas-vindaꜱ', parent: inicio.id });
-    await guild.channels.create({ name: '📢 ‼️ αvιѕoѕ!', parent: inicio.id });
-    await guild.channels.create({ name: '📜 termon', parent: inicio.id });
+    await guild.channels.create({ name: '👾 boas-vindaꜱ', parent: inicio.id, permissionOverwrites: privado() });
+    await guild.channels.create({ name: '📢 ‼️ αvιѕoѕ!', parent: inicio.id, permissionOverwrites: privado() });
+    await guild.channels.create({ name: '📜 termon', parent: inicio.id, permissionOverwrites: privado() });
 
     // =====================
     // COMUNIDADE
     // =====================
     const comunidade = await guild.channels.create({ name: '【 COMUNIDADE 】', type: ChannelType.GuildCategory });
 
-    await guild.channels.create({ name: '🛒・coмo・αdquιrιr', parent: comunidade.id });
-    await guild.channels.create({ name: '😈・ѕejα-dα-noѕѕα-equιpe', parent: comunidade.id });
+    await guild.channels.create({ name: '🛒・coмo・αdquιrιr', parent: comunidade.id, permissionOverwrites: privado() });
+    await guild.channels.create({ name: '😈・ѕejα-dα-noѕѕα-equιpe', parent: comunidade.id, permissionOverwrites: privado() });
 
-    // VERIFICAÇÃO
+    // VERIFICAÇÃO (VISÍVEL PRA TODOS)
     const verificacao = await guild.channels.create({
       name: '🔐・verιfιcαçὰo',
       parent: comunidade.id,
@@ -105,58 +118,30 @@ client.on(Events.MessageCreate, async message => {
     // =====================
     const geral = await guild.channels.create({ name: '🗨️ gαrαl', type: ChannelType.GuildCategory });
 
-    await guild.channels.create({
-      name: '🗨️・gerαl',
-      parent: geral.id,
-      permissionOverwrites: [
-        { id: guild.roles.everyone, deny: [PermissionsBitField.Flags.ViewChannel] },
-        { id: verificado.id, allow: [PermissionsBitField.Flags.ViewChannel] }
-      ]
-    });
-
-    const apk = await guild.channels.create({ name: '🏅・αpk-mod-αndroιd', parent: geral.id });
+    await guild.channels.create({ name: '🗨️・gerαl', parent: geral.id, permissionOverwrites: privado() });
+    const apk = await guild.channels.create({ name: '🏅・αpk-mod-αndroιd', parent: geral.id, permissionOverwrites: privado() });
 
     // =====================
     // ANDROID
     // =====================
     const android = await guild.channels.create({ name: '📱 FFH4X ANDROID', type: ChannelType.GuildCategory });
 
-    const contas = await guild.channels.create({ name: '🏅・contαѕ-ghoѕt-ff', parent: android.id });
-    const holo = await guild.channels.create({ name: '🏅 hologrαmα-αndroιd', parent: android.id });
-    const drip = await guild.channels.create({ name: '🏅・drιp-clιente', parent: android.id });
+    const contas = await guild.channels.create({ name: '🏅・contαѕ-ghoѕt-ff', parent: android.id, permissionOverwrites: privado() });
+    const holo = await guild.channels.create({ name: '🏅 hologrαmα-αndroιd', parent: android.id, permissionOverwrites: privado() });
+    const drip = await guild.channels.create({ name: '🏅・drιp-clιente', parent: android.id, permissionOverwrites: privado() });
 
     // =====================
     // IOS
     // =====================
     const ios = await guild.channels.create({ name: '🍎 FFH4X IOS', type: ChannelType.GuildCategory });
 
-    const rage = await guild.channels.create({ name: '🏅・ιphone-rαge', parent: ios.id });
-    const safe = await guild.channels.create({ name: '🏅・ιphone-ѕαfe', parent: ios.id });
-    const bypass = await guild.channels.create({ name: '🏅・ʙypαѕѕ-full', parent: ios.id });
-    const wifi = await guild.channels.create({ name: '🏅・hѕ-wιfι', parent: ios.id });
+    const rage = await guild.channels.create({ name: '🏅・ιphone-rαge', parent: ios.id, permissionOverwrites: privado() });
+    const safe = await guild.channels.create({ name: '🏅・ιphone-ѕαfe', parent: ios.id, permissionOverwrites: privado() });
+    const bypass = await guild.channels.create({ name: '🏅・ʙypαѕѕ-full', parent: ios.id, permissionOverwrites: privado() });
+    const wifi = await guild.channels.create({ name: '🏅・hѕ-wιfι', parent: ios.id, permissionOverwrites: privado() });
 
     // =====================
-    // SUPORTE
-    // =====================
-    const suporte = await guild.channels.create({ name: '🎟️・ѕupoʀte', type: ChannelType.GuildCategory });
-
-    await guild.channels.create({ name: '🎟️・𝓼𝓾𝓹𝓸𝓻𝓽𝓮', parent: suporte.id });
-    await guild.channels.create({ name: 'ATENDIMENTO 1', type: 2, parent: suporte.id });
-    await guild.channels.create({ name: 'ATENDIMENTO 2', type: 2, parent: suporte.id });
-    await guild.channels.create({ name: 'ATENDIMENTO 3', type: 2, parent: suporte.id });
-
-    // =====================
-    // CALLS
-    // =====================
-    const calls = await guild.channels.create({ name: '🔊 CALLS', type: ChannelType.GuildCategory });
-
-    await guild.channels.create({ name: 'Geral 1', type: 2, parent: calls.id });
-    await guild.channels.create({ name: 'Geral 2', type: 2, parent: calls.id });
-    await guild.channels.create({ name: 'Suporte 1', type: 2, parent: calls.id });
-    await guild.channels.create({ name: 'Suporte 2', type: 2, parent: calls.id });
-
-    // =====================
-    // DOWNLOADS
+    // DOWNLOAD (LIBERADO)
     // =====================
     const downloads = await guild.channels.create({ name: 'LINK DOS XITS 👇', type: ChannelType.GuildCategory });
 
@@ -164,12 +149,6 @@ client.on(Events.MessageCreate, async message => {
     const d2 = await guild.channels.create({ name: '🔐・dowload-ios', parent: downloads.id });
     const d3 = await guild.channels.create({ name: '🔐・dowload-wifi', parent: downloads.id });
     const d4 = await guild.channels.create({ name: '🔐・dowload-drip', parent: downloads.id });
-
-    // =====================
-    // CALL VIP
-    // =====================
-    const vip = await guild.channels.create({ name: '↳ CALL ATENDIMENTO', type: ChannelType.GuildCategory });
-    await guild.channels.create({ name: 'CALL ATENDIMENTO VIP', type: 2, parent: vip.id });
 
     // =====================
     // PAINEL
@@ -229,7 +208,7 @@ Se você quer qualidade e resultado, esse painel é pra você.
     await painel(bypass, 'BYPASS FULL');
     await painel(wifi, 'HS WIFI');
 
-    message.reply('✅ Servidor 100% criado!');
+    message.reply('✅ Servidor criado PERFEITO!');
   }
 });
 
@@ -281,7 +260,7 @@ client.on(Events.InteractionCreate, async interaction => {
     const canal = interaction.guild.channels.cache.get(id);
 
     const embed = new EmbedBuilder()
-      .setTitle('🛒 Carrinho de Compras')
+      .setTitle('🛒 Carrinho')
       .setDescription(`Plano: ${plano}
 
 PIX:
@@ -300,6 +279,7 @@ ${chavePix}`);
 
     return interaction.reply({ content: '✅ Pedido enviado!', ephemeral: true });
   }
+
 });
 
 client.login(TOKEN);
