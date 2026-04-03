@@ -2,7 +2,6 @@ const {
   Client,
   GatewayIntentBits,
   ChannelType,
-  PermissionsBitField,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
@@ -10,6 +9,8 @@ const {
   Events,
   StringSelectMenuBuilder
 } = require('discord.js');
+
+const QRCode = require('qrcode');
 
 const client = new Client({
   intents: [
@@ -23,13 +24,49 @@ const TOKEN = process.env.TOKEN;
 
 let chavePix = 'NÃO DEFINIDA';
 
+// ================= PIX GERADOR =================
+function gerarPayloadPix(chave, valor, nome = "FFH4X STORE", cidade = "MANAUS") {
+  const format = (id, value) => `${id}${value.length.toString().padStart(2, '0')}${value}`;
+
+  let payload =
+    format("00", "01") +
+    format("26", format("00", "BR.GOV.BCB.PIX") + format("01", chave)) +
+    format("52", "0000") +
+    format("53", "986") +
+    format("54", valor.toFixed(2)) +
+    format("58", "BR") +
+    format("59", nome) +
+    format("60", cidade) +
+    format("62", format("05", "***"));
+
+  const crc16 = (str) => {
+    let crc = 0xFFFF;
+    for (let i = 0; i < str.length; i++) {
+      crc ^= str.charCodeAt(i) << 8;
+      for (let j = 0; j < 8; j++) {
+        crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
+      }
+    }
+    return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+  };
+
+  payload += "6304" + crc16(payload);
+  return payload;
+}
+
+// ================= PREÇOS =================
+const precos = {
+  "1 DIA": 17.99,
+  "3 DIAS": 27.99,
+  "7 DIAS": 40.00,
+  "30 DIAS": 85.00
+};
+
 client.once(Events.ClientReady, () => {
   console.log(`✅ Online como ${client.user.tag}`);
 });
 
-// =====================
-// COMANDOS
-// =====================
+// ================= COMANDOS =================
 client.on(Events.MessageCreate, async message => {
   if (!message.guild || message.author.bot) return;
 
@@ -37,7 +74,6 @@ client.on(Events.MessageCreate, async message => {
   if (message.content.startsWith('!chave')) {
     const chave = message.content.split(' ').slice(1).join(' ');
     if (!chave) return message.reply('❌ Coloque a chave PIX');
-
     chavePix = chave;
     return message.reply('✅ Chave PIX salva!');
   }
@@ -49,102 +85,34 @@ client.on(Events.MessageCreate, async message => {
 
     await message.reply('🚀 Criando servidor completo...');
 
-    // =====================
-    // 🎭 CARGOS
-    // =====================
+    // CARGOS
     await guild.roles.create({ name: '👑 DONO', color: '#000000' });
     await guild.roles.create({ name: '👑 SUB DONO', color: '#000000' });
     await guild.roles.create({ name: 'GERENTE', color: '#ff0000' });
 
-    await guild.roles.create({ name: 'CLIENTE ANDROID', color: '#00b0f4' });
-    await guild.roles.create({ name: 'CLIENTE IOS', color: '#ff00ff' });
-    await guild.roles.create({ name: 'CLIENTE WIFI', color: '#ffff00' });
-    await guild.roles.create({ name: 'CLIENTE DRIP', color: '#ff8800' });
-
-    // =====================
-    // INÍCIO
-    // =====================
-    const inicio = await guild.channels.create({ name: 'Início / Recepção', type: ChannelType.GuildCategory });
-
-    await guild.channels.create({ name: '👾 boas-vindaꜱ', parent: inicio.id });
-    await guild.channels.create({ name: '📢 ‼️ αvιѕoѕ!', parent: inicio.id });
-    await guild.channels.create({ name: '📜 termon', parent: inicio.id });
-
-    // =====================
-    // COMUNIDADE
-    // =====================
-    const comunidade = await guild.channels.create({ name: '【 COMUNIDADE 】', type: ChannelType.GuildCategory });
-
-    await guild.channels.create({ name: '🛒・coмo・αdquιrιr', parent: comunidade.id });
-    await guild.channels.create({ name: '😈・ѕejα-dα-noѕѕα-equιpe', parent: comunidade.id });
-
-    // =====================
-    // GERAL
-    // =====================
+    // CATEGORIAS
     const geral = await guild.channels.create({ name: '🗨️ gαrαl', type: ChannelType.GuildCategory });
-
-    await guild.channels.create({ name: '🗨️・gerαl', parent: geral.id });
-    const apk = await guild.channels.create({ name: '🏅・αpk-mod-αndroιd', parent: geral.id });
-
-    // =====================
-    // ANDROID
-    // =====================
     const android = await guild.channels.create({ name: '📱 FFH4X ANDROID', type: ChannelType.GuildCategory });
-
-    const contas = await guild.channels.create({ name: '🏅・contαѕ-ghoѕt-ff', parent: android.id });
-    const holo = await guild.channels.create({ name: '🏅 hologrαmα-αndroιd', parent: android.id });
-    const drip = await guild.channels.create({ name: '🏅・drιp-clιente', parent: android.id });
-
-    // =====================
-    // IOS
-    // =====================
     const ios = await guild.channels.create({ name: '🍎 FFH4X IOS', type: ChannelType.GuildCategory });
+    const downloads = await guild.channels.create({ name: 'LINK DOS XITS 👇', type: ChannelType.GuildCategory });
+
+    // CANAIS
+    const apk = await guild.channels.create({ name: '🏅・αpk-mod-αndroιd', parent: geral.id });
+    const drip = await guild.channels.create({ name: '🏅・drιp-clιente', parent: android.id });
 
     const rage = await guild.channels.create({ name: '🏅・ιphone-rαge', parent: ios.id });
     const safe = await guild.channels.create({ name: '🏅・ιphone-ѕαfe', parent: ios.id });
     const bypass = await guild.channels.create({ name: '🏅・ʙypαѕѕ-full', parent: ios.id });
     const wifi = await guild.channels.create({ name: '🏅・hѕ-wιfι', parent: ios.id });
 
-    // =====================
-    // SUPORTE
-    // =====================
-    const suporte = await guild.channels.create({ name: '🎟️・ѕupoʀte', type: ChannelType.GuildCategory });
-
-    await guild.channels.create({ name: '🎟️・𝓼𝓾𝓹𝓸𝓻𝓽𝓮', parent: suporte.id });
-    await guild.channels.create({ name: 'ATENDIMENTO 1', type: 2, parent: suporte.id });
-    await guild.channels.create({ name: 'ATENDIMENTO 2', type: 2, parent: suporte.id });
-    await guild.channels.create({ name: 'ATENDIMENTO 3', type: 2, parent: suporte.id });
-
-    // =====================
-    // CALLS
-    // =====================
-    const calls = await guild.channels.create({ name: '🔊 CALLS', type: ChannelType.GuildCategory });
-
-    await guild.channels.create({ name: 'Geral 1', type: 2, parent: calls.id });
-    await guild.channels.create({ name: 'Geral 2', type: 2, parent: calls.id });
-    await guild.channels.create({ name: 'Suporte 1', type: 2, parent: calls.id });
-    await guild.channels.create({ name: 'Suporte 2', type: 2, parent: calls.id });
-
-    // =====================
-    // DOWNLOADS
-    // =====================
-    const downloads = await guild.channels.create({ name: 'LINK DOS XITS 👇', type: ChannelType.GuildCategory });
-
     await guild.channels.create({ name: '🔐・dowload-android', parent: downloads.id });
     await guild.channels.create({ name: '🔐・dowload-ios', parent: downloads.id });
     await guild.channels.create({ name: '🔐・dowload-wifi', parent: downloads.id });
     await guild.channels.create({ name: '🔐・dowload-drip', parent: downloads.id });
 
-    // =====================
-    // CALL VIP
-    // =====================
-    const vip = await guild.channels.create({ name: '↳ CALL ATENDIMENTO', type: ChannelType.GuildCategory });
-    await guild.channels.create({ name: 'CALL ATENDIMENTO VIP', type: 2, parent: vip.id });
-
-    // =====================
-    // PAINEL DE VENDA
-    // =====================
+    // ================= PAINEL =================
     async function painel(canal, nome) {
+
       const embed = new EmbedBuilder()
         .setColor('#a020f0')
         .setTitle(`🔥😈 Adquira Já seu Painel ${nome} 😈🔥`)
@@ -199,61 +167,63 @@ Se você quer qualidade e resultado, esse painel é pra você.
     await painel(bypass, 'BYPASS FULL');
     await painel(wifi, 'HS WIFI');
 
-    message.reply('✅ Servidor criado com sucesso!');
+    message.reply('✅ Servidor profissional criado!');
   }
 });
 
-// =====================
-// INTERAÇÕES
-// =====================
+// ================= INTERAÇÕES =================
 client.on(Events.InteractionCreate, async interaction => {
 
-  if (interaction.isButton()) {
+  if (interaction.isButton() && interaction.customId.startsWith('comprar_')) {
 
-    if (interaction.customId.startsWith('comprar_')) {
-      const id = interaction.customId.split('_')[1];
+    const id = interaction.customId.split('_')[1];
 
-      const menu = new StringSelectMenuBuilder()
-        .setCustomId(`plano_${id}`)
-        .addOptions([
-          { label: '1 DIA - 17,99', value: '1 DIA' },
-          { label: '3 DIAS - 27,99', value: '3 DIAS' },
-          { label: '7 DIAS - 40', value: '7 DIAS' },
-          { label: '30 DIAS - 85', value: '30 DIAS' }
-        ]);
+    const menu = new StringSelectMenuBuilder()
+      .setCustomId(`plano_${id}`)
+      .setPlaceholder('Escolha seu plano')
+      .addOptions([
+        { label: '1 DIA - 17,99', value: '1 DIA' },
+        { label: '3 DIAS - 27,99', value: '3 DIAS' },
+        { label: '7 DIAS - 40', value: '7 DIAS' },
+        { label: '30 DIAS - 85', value: '30 DIAS' }
+      ]);
 
-      return interaction.reply({
-        content: 'Escolha o plano:',
-        components: [new ActionRowBuilder().addComponents(menu)],
-        ephemeral: true
-      });
-    }
-
-    if (interaction.customId === 'confirmar') {
-      const permitido = ['👑 DONO', '👑 SUB DONO', 'GERENTE'];
-      const ok = interaction.member.roles.cache.some(r => permitido.includes(r.name));
-
-      if (!ok) return interaction.reply({ content: '❌ Sem permissão!', ephemeral: true });
-
-      return interaction.reply('✅ Pagamento confirmado!');
-    }
+    return interaction.reply({
+      content: 'Selecione seu plano:',
+      components: [new ActionRowBuilder().addComponents(menu)],
+      ephemeral: true
+    });
   }
 
   if (interaction.isStringSelectMenu()) {
+
     const id = interaction.customId.split('_')[1];
     const plano = interaction.values[0];
+    const valor = precos[plano];
+
     const canal = interaction.guild.channels.cache.get(id);
 
-    const embed = new EmbedBuilder()
-      .setTitle('🛒 Carrinho de Compras')
-      .setDescription(`Plano: ${plano}
+    const payload = gerarPayloadPix(chavePix, valor);
+    const qr = await QRCode.toDataURL(payload);
 
-PIX:
-${chavePix}`);
+    const embed = new EmbedBuilder()
+      .setColor('#a020f0')
+      .setTitle('🛒 Carrinho de Compras')
+      .setDescription(`
+Produto: ${plano}
+
+💸 Valor: R$ ${valor.toFixed(2)}
+
+📋 PIX Copia e Cola:
+\`\`\`
+${payload}
+\`\`\`
+`)
+      .setImage(qr);
 
     const btn = new ButtonBuilder()
       .setCustomId('confirmar')
-      .setLabel('Confirmar')
+      .setLabel('Confirmar Pagamento')
       .setStyle(ButtonStyle.Primary);
 
     await canal.send({
@@ -262,7 +232,19 @@ ${chavePix}`);
       components: [new ActionRowBuilder().addComponents(btn)]
     });
 
-    return interaction.reply({ content: '✅ Pedido enviado!', ephemeral: true });
+    return interaction.reply({ content: '✅ Pedido criado!', ephemeral: true });
+  }
+
+  if (interaction.isButton() && interaction.customId === 'confirmar') {
+
+    const permitido = ['👑 DONO', '👑 SUB DONO', 'GERENTE'];
+    const ok = interaction.member.roles.cache.some(r => permitido.includes(r.name));
+
+    if (!ok) {
+      return interaction.reply({ content: '❌ Sem permissão!', ephemeral: true });
+    }
+
+    return interaction.reply('✅ Pagamento confirmado!');
   }
 
 });
