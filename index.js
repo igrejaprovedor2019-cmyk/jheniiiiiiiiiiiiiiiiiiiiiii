@@ -1,171 +1,179 @@
 const {
-    Client,
-    GatewayIntentBits,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-    EmbedBuilder,
-    PermissionsBitField,
-    ChannelType
-} = require("discord.js");
+  Client,
+  GatewayIntentBits,
+  ChannelType,
+  PermissionsBitField,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
+  Events
+} = require('discord.js');
 
 const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
-    ]
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
 });
 
-client.once("clientReady", () => {
-    console.log(`✅ Online: ${client.user.tag}`);
+const TOKEN = process.env.TOKEN;
+const PREFIX = '!';
+
+client.once(Events.ClientReady, () => {
+  console.log(`✅ Online como ${client.user.tag}`);
 });
 
-// ================= PAINEL =================
-client.on("messageCreate", async (message) => {
-    if (message.author.bot) return;
+// =========================
+// 💬 COMANDO !painel
+// =========================
+client.on(Events.MessageCreate, async message => {
+  if (!message.guild) return;
+  if (message.author.bot) return;
 
-    if (message.content === "!painel") {
+  if (message.content === `${PREFIX}painel`) {
 
-        const embed = new EmbedBuilder()
-            .setTitle("🔥 COMBO BLOX FRUITS")
-            .setDescription(`
-✨ Entrega rápida e segura
+    await message.reply('🚀 Criando servidor completo...');
 
-━━━━━━━━━━━━━━
+    const guild = message.guild;
 
-📦 Inclui:
-📈 Level Max +
-🗡️ CDK
-⚔️ TTK
+    // =====================
+    // 🎭 CARGOS
+    // =====================
+    const cargos = {};
 
-🍈 Frutas:
-🐉 Dragon • 🦊 Kitsune • 🐯 Tiger  
-❄️ Yeti • ☁️ Gas • 🍩 Dough  
-
-━━━━━━━━━━━━━━
-
-💰 **R$19,90**
-            `)
-            .setImage("https://cdn.dfg.com.br/itemimages/944475148-contas-blox-fruits-kitsune-dark-blade-yoru-e-brindes-NI33.webp")
-            .setColor("#ff0000");
-
-        const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setCustomId("comprar")
-                .setLabel("🛒 Comprar")
-                .setStyle(ButtonStyle.Danger)
-        );
-
-        await message.channel.send({ embeds: [embed], components: [row] });
+    async function criarCargo(nome, cor) {
+      const cargo = await guild.roles.create({
+        name: nome,
+        color: cor
+      });
+      cargos[nome] = cargo;
+      return cargo;
     }
-});
 
-// ================= BOTÕES =================
-client.on("interactionCreate", async (interaction) => {
-    if (!interaction.isButton()) return;
+    await criarCargo('👑 DONO', 'Gold');
+    await criarCargo('👑 SUB DONO', 'Yellow');
+    await criarCargo('GERENTE', 'Orange');
+    await criarCargo('ΔSTAFF', 'Red');
+    await criarCargo('[🛠️ SUPORTE 🛠️]', 'Blue');
 
-    const { guild, user, customId, channel } = interaction;
+    await criarCargo('💠 MEMBRO', 'Grey');
+    await criarCargo('🖥️ CLIENTE APK MOD', 'Blue');
+    await criarCargo('🖥️ CLIENTE PAINEL IOS', 'Purple');
+    await criarCargo('🖥️ CLIENTE HS WIFI', 'Yellow');
+    await criarCargo('🖥️ CLIENTE HOLOGRAMA', 'Aqua');
+    await criarCargo('🖥️ CLIENTE CONTA', 'Green');
+    await criarCargo('🖥️ CLIENTE DRIP', 'DarkPurple');
 
-    // ================= COMPRAR =================
-    if (customId === "comprar") {
+    const verificado = await criarCargo('✔️ VERIFICADO', 'Green');
 
-        // RESPONDE RÁPIDO (evita travar)
-        await interaction.reply({
-            content: "✅ Abrindo seu ticket...",
-            ephemeral: true
-        });
+    // =====================
+    // 🔒 BLOQUEAR SERVIDOR
+    // =====================
+    await guild.roles.everyone.setPermissions([]);
 
-        try {
-            // nome SEM BUG
-            const nome = user.username.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-
-            const ticket = await guild.channels.create({
-                name: `ticket-${nome}`,
-                type: ChannelType.GuildText,
-                permissionOverwrites: [
-                    {
-                        id: guild.roles.everyone.id,
-                        deny: [PermissionsBitField.Flags.ViewChannel]
-                    },
-                    {
-                        id: user.id,
-                        allow: [
-                            PermissionsBitField.Flags.ViewChannel,
-                            PermissionsBitField.Flags.SendMessages
-                        ]
-                    },
-                    {
-                        id: process.env.DONO_ID,
-                        allow: [
-                            PermissionsBitField.Flags.ViewChannel,
-                            PermissionsBitField.Flags.SendMessages
-                        ]
-                    }
-                ]
-            });
-
-            const buttons = new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId("confirmar")
-                    .setLabel("✅ Confirmar Pagamento")
-                    .setStyle(ButtonStyle.Success),
-
-                new ButtonBuilder()
-                    .setCustomId("fechar")
-                    .setLabel("🔒 Fechar")
-                    .setStyle(ButtonStyle.Secondary)
-            );
-
-            await ticket.send({
-                content: `🎫 ${user} criou o ticket
-
-💰 Valor: R$19,90  
-🔑 Chave PIX:
-
-\`\`\`
-${process.env.PIX}
-\`\`\`
-
-📌 Envie o comprovante.`,
-                components: [buttons]
-            });
-
-        } catch (err) {
-            console.log("ERRO:", err);
+    // =====================
+    // ✅ VERIFICAÇÃO
+    // =====================
+    const canalVerificacao = await guild.channels.create({
+      name: '✅・verificação',
+      type: ChannelType.GuildText,
+      permissionOverwrites: [
+        {
+          id: guild.roles.everyone,
+          allow: [PermissionsBitField.Flags.ViewChannel]
         }
+      ]
+    });
+
+    const embed = new EmbedBuilder()
+      .setTitle('✅ Verificação')
+      .setDescription('Clique no botão abaixo para liberar seu acesso ao servidor.\n\n🔒 Sistema de segurança ativo')
+      .setThumbnail('https://cdn-icons-png.flaticon.com/512/7398/7398228.png')
+      .setColor('#2b2d31');
+
+    const botao = new ButtonBuilder()
+      .setCustomId('verificar')
+      .setLabel('Verificar')
+      .setStyle(ButtonStyle.Success);
+
+    await canalVerificacao.send({
+      embeds: [embed],
+      components: [new ActionRowBuilder().addComponents(botao)]
+    });
+
+    // =====================
+    // 📥 DOWNLOADS
+    // =====================
+    const downloads = await guild.channels.create({
+      name: '📥・downloads',
+      type: ChannelType.GuildCategory
+    });
+
+    async function criarCanalPrivado(nome, cargo) {
+      await guild.channels.create({
+        name: nome,
+        type: ChannelType.GuildText,
+        parent: downloads.id,
+        permissionOverwrites: [
+          {
+            id: guild.roles.everyone,
+            deny: [PermissionsBitField.Flags.ViewChannel]
+          },
+          {
+            id: cargo.id,
+            allow: [PermissionsBitField.Flags.ViewChannel]
+          }
+        ]
+      });
     }
 
-    // ================= CONFIRMAR =================
-    if (customId === "confirmar") {
+    await criarCanalPrivado('download-android', cargos['🖥️ CLIENTE APK MOD']);
+    await criarCanalPrivado('download-ios', cargos['🖥️ CLIENTE PAINEL IOS']);
+    await criarCanalPrivado('download-wifi', cargos['🖥️ CLIENTE HS WIFI']);
+    await criarCanalPrivado('download-holograma', cargos['🖥️ CLIENTE HOLOGRAMA']);
+    await criarCanalPrivado('download-conta', cargos['🖥️ CLIENTE CONTA']);
+    await criarCanalPrivado('download-drip', cargos['🖥️ CLIENTE DRIP']);
 
-        if (user.id !== process.env.DONO_ID) {
-            return interaction.reply({
-                content: "❌ Apenas o dono confirma.",
-                ephemeral: true
-            });
+    // =====================
+    // 💬 CHAT
+    // =====================
+    await guild.channels.create({
+      name: '💬・chat',
+      type: ChannelType.GuildText,
+      permissionOverwrites: [
+        {
+          id: guild.roles.everyone,
+          deny: [PermissionsBitField.Flags.ViewChannel]
+        },
+        {
+          id: verificado.id,
+          allow: [PermissionsBitField.Flags.ViewChannel]
         }
+      ]
+    });
 
-        await channel.send("✅ Pagamento confirmado!");
-        await interaction.reply({ content: "Confirmado.", ephemeral: true });
-    }
-
-    // ================= FECHAR =================
-    if (customId === "fechar") {
-
-        if (user.id !== process.env.DONO_ID) {
-            return interaction.reply({
-                content: "❌ Apenas o dono fecha.",
-                ephemeral: true
-            });
-        }
-
-        await interaction.reply({ content: "🔒 Fechando...", ephemeral: true });
-
-        setTimeout(() => {
-            channel.delete().catch(() => {});
-        }, 3000);
-    }
+    await message.reply('✅ Servidor criado com sucesso!');
+  }
 });
 
-client.login(process.env.TOKEN);
+// =====================
+// 🔘 BOTÃO VERIFICAÇÃO
+// =====================
+client.on(Events.InteractionCreate, async interaction => {
+  if (!interaction.isButton()) return;
+
+  if (interaction.customId === 'verificar') {
+    const cargo = interaction.guild.roles.cache.find(r => r.name === '✔️ VERIFICADO');
+
+    await interaction.member.roles.add(cargo);
+
+    await interaction.reply({
+      content: '✅ Você foi verificado!',
+      ephemeral: true
+    });
+  }
+});
+
+client.login(TOKEN);
