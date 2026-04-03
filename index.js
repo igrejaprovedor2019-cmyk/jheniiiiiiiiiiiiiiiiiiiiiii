@@ -22,7 +22,6 @@ const client = new Client({
 
 const TOKEN = process.env.TOKEN;
 
-// ================= CONFIG =================
 let chavePix = "NÃO DEFINIDA";
 
 const precos = {
@@ -32,12 +31,10 @@ const precos = {
   "30 DIAS": 85.00
 };
 
-// ================= ONLINE =================
 client.on("ready", () => {
   console.log("✅ BOT ONLINE");
 });
 
-// ================= COMANDOS =================
 client.on("messageCreate", async (msg) => {
   if (!msg.guild || msg.author.bot) return;
 
@@ -50,10 +47,10 @@ client.on("messageCreate", async (msg) => {
     return msg.reply("✅ Chave PIX salva!");
   }
 
-  // CRIAR SERVIDOR
+  // CRIAR SERVIDOR COMPLETO
   if (msg.content === "!painel") {
 
-    await msg.reply("🚀 Criando servidor...");
+    await msg.reply("🚀 Criando servidor COMPLETO...");
 
     const guild = msg.guild;
 
@@ -63,84 +60,97 @@ client.on("messageCreate", async (msg) => {
     await guild.roles.create({ name: "GERENTE", color: "#ff0000" });
 
     // ================= CATEGORIAS =================
-    const catTickets = await guild.channels.create({
-      name: "🎫 TICKETS",
-      type: ChannelType.GuildCategory
-    });
-
-    const catGeral = await guild.channels.create({
-      name: "🗨️ GERAL",
-      type: ChannelType.GuildCategory
-    });
-
-    const catAndroid = await guild.channels.create({
-      name: "📱 ANDROID",
-      type: ChannelType.GuildCategory
-    });
-
-    const catIOS = await guild.channels.create({
-      name: "🍎 IOS",
-      type: ChannelType.GuildCategory
-    });
+    const inicio = await guild.channels.create({ name: "Início / Recepção", type: ChannelType.GuildCategory });
+    const comunidade = await guild.channels.create({ name: "【 COMUNIDADE 】", type: ChannelType.GuildCategory });
+    const geral = await guild.channels.create({ name: "🗨️ gαrαl", type: ChannelType.GuildCategory });
+    const android = await guild.channels.create({ name: "📱 FFH4X ANDROID", type: ChannelType.GuildCategory });
+    const ios = await guild.channels.create({ name: "🍎 FFH4X IOS", type: ChannelType.GuildCategory });
+    const suporte = await guild.channels.create({ name: "🎟️ ѕupoʀte", type: ChannelType.GuildCategory });
+    const calls = await guild.channels.create({ name: "🔊 CALLS", type: ChannelType.GuildCategory });
+    const downloads = await guild.channels.create({ name: "LINK DOS XITS 👇", type: ChannelType.GuildCategory });
+    const callVip = await guild.channels.create({ name: "↳ CALL ATENDIMENTO", type: ChannelType.GuildCategory });
+    const tickets = await guild.channels.create({ name: "🎫 TICKETS", type: ChannelType.GuildCategory });
 
     // ================= CANAIS =================
-    async function criar(nome, categoria) {
-      return await guild.channels.create({
-        name: nome,
-        parent: categoria.id
-      });
-    }
+    const boas = await guild.channels.create({ name: "👾 boas-vindaꜱ", parent: inicio.id });
+    await guild.channels.create({ name: "📢 ‼️ αvιѕoѕ!", parent: inicio.id });
+    await guild.channels.create({ name: "📜 termon", parent: inicio.id });
 
-    const apk = await criar("🏅android", catGeral);
-    const drip = await criar("🏅drip", catAndroid);
+    await guild.channels.create({ name: "🛒・coмo・αdquιrιr", parent: comunidade.id });
+    await guild.channels.create({ name: "😈・ѕejα-dα-noѕѕα-equιpe", parent: comunidade.id });
+    await guild.channels.create({ name: "🔐・verificação", parent: comunidade.id });
 
-    const rage = await criar("🏅rage", catIOS);
-    const safe = await criar("🏅safe", catIOS);
-    const bypass = await criar("🏅bypass", catIOS);
-    const wifi = await criar("🏅wifi", catIOS);
+    await guild.channels.create({ name: "🗨️・gerαl", parent: geral.id });
+
+    const apk = await guild.channels.create({ name: "🏅・αpk-mod-αndroιd", parent: geral.id });
+
+    const contas = await guild.channels.create({ name: "🏅・contαѕ-ghoѕt-ff", parent: android.id });
+    const holo = await guild.channels.create({ name: "🏅 hologrαmα-αndroιd", parent: android.id });
+    const drip = await guild.channels.create({ name: "🏅・drιp-clιente", parent: android.id });
+
+    const rage = await guild.channels.create({ name: "🏅・ιphone-rαge", parent: ios.id });
+    const safe = await guild.channels.create({ name: "🏅・ιphone-ѕαfe", parent: ios.id });
+    const bypass = await guild.channels.create({ name: "🏅・ʙypαѕѕ-full", parent: ios.id });
+    const wifi = await guild.channels.create({ name: "🏅・hѕ-wιfι", parent: ios.id });
+
+    await guild.channels.create({ name: "🎟️・𝓼𝓾𝓹𝓸𝓻𝓽𝓮", parent: suporte.id });
+    await guild.channels.create({ name: "ATENDIMENTO 1", type: 2, parent: suporte.id });
+    await guild.channels.create({ name: "ATENDIMENTO 2", type: 2, parent: suporte.id });
+    await guild.channels.create({ name: "ATENDIMENTO 3", type: 2, parent: suporte.id });
+
+    await guild.channels.create({ name: "🔊 Geral 1", type: 2, parent: calls.id });
+    await guild.channels.create({ name: "🔊 Geral 2", type: 2, parent: calls.id });
+    await guild.channels.create({ name: "🔊 Suporte 1", type: 2, parent: calls.id });
+    await guild.channels.create({ name: "🔊 Suporte 2", type: 2, parent: calls.id });
+
+    await guild.channels.create({ name: "🔐 ↳ dowload-android", parent: downloads.id });
+    await guild.channels.create({ name: "🔐 ↳ dowload-ios", parent: downloads.id });
+    await guild.channels.create({ name: "🔐 ↳ dowload-wifi", parent: downloads.id });
+    await guild.channels.create({ name: "🔐 ↳ dowload-drip", parent: downloads.id });
+
+    await guild.channels.create({ name: "🔊 CALL ATENDIMENTO VIP", type: 2, parent: callVip.id });
 
     // ================= PAINEL =================
     async function painel(canal, nome) {
-
       const embed = new EmbedBuilder()
         .setColor("#a020f0")
-        .setTitle(`🔥 ${nome}`)
+        .setTitle(`🔥😈 ${nome} 😈🔥`)
         .setDescription("Clique em comprar")
         .setImage("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQC7vNX0Nd8YF3uAA1R8nUyKV1H-6Lym9U9DQ&s");
 
-      const botao = new ButtonBuilder()
+      const btn = new ButtonBuilder()
         .setCustomId("buy_" + nome)
         .setLabel("Comprar")
         .setStyle(ButtonStyle.Success);
 
       await canal.send({
         embeds: [embed],
-        components: [new ActionRowBuilder().addComponents(botao)]
+        components: [new ActionRowBuilder().addComponents(btn)]
       });
     }
 
     await painel(apk, "ANDROID");
+    await painel(contas, "CONTAS");
+    await painel(holo, "HOLOGRAMA");
     await painel(drip, "DRIP");
     await painel(rage, "RAGE");
     await painel(safe, "SAFE");
     await painel(bypass, "BYPASS");
     await painel(wifi, "WIFI");
 
-    msg.reply("✅ Servidor pronto!");
+    msg.reply("✅ SERVIDOR COMPLETO CRIADO!");
   }
 });
 
 // ================= INTERAÇÕES =================
 client.on("interactionCreate", async (interaction) => {
 
-  // BOTÃO COMPRAR
   if (interaction.isButton() && interaction.customId.startsWith("buy_")) {
 
     const nome = interaction.customId.split("_")[1];
 
     const menu = new StringSelectMenuBuilder()
       .setCustomId("plano_" + nome)
-      .setPlaceholder("Escolha o plano")
       .addOptions([
         { label: "1 DIA - 17,99", value: "1 DIA" },
         { label: "3 DIAS - 27,99", value: "3 DIAS" },
@@ -155,14 +165,12 @@ client.on("interactionCreate", async (interaction) => {
     });
   }
 
-  // CRIAR TICKET
   if (interaction.isStringSelectMenu()) {
 
     const plano = interaction.values[0];
     const valor = precos[plano];
 
     const guild = interaction.guild;
-
     const categoria = guild.channels.cache.find(c => c.name === "🎫 TICKETS");
 
     const canal = await guild.channels.create({
@@ -174,41 +182,16 @@ client.on("interactionCreate", async (interaction) => {
       ]
     });
 
-    const pix = `PAGUE R$${valor} PARA ${chavePix}`;
-    const qr = await QRCode.toDataURL(pix);
+    const qr = await QRCode.toDataURL(`PIX ${valor} ${chavePix}`);
 
     const embed = new EmbedBuilder()
-      .setColor("#a020f0")
       .setTitle("💸 PAGAMENTO")
-      .setDescription(`Plano: ${plano}\nValor: R$ ${valor}\n\nPIX:\n${chavePix}`)
+      .setDescription(`Plano: ${plano}\nValor: R$ ${valor}\nPIX: ${chavePix}`)
       .setImage(qr);
 
-    const btn = new ButtonBuilder()
-      .setCustomId("confirmar")
-      .setLabel("Confirmar")
-      .setStyle(ButtonStyle.Primary);
-
-    await canal.send({
-      content: `${interaction.user}`,
-      embeds: [embed],
-      components: [new ActionRowBuilder().addComponents(btn)]
-    });
+    await canal.send({ embeds: [embed] });
 
     return interaction.reply({ content: "🎫 Ticket criado!", ephemeral: true });
-  }
-
-  // CONFIRMAR
-  if (interaction.isButton() && interaction.customId === "confirmar") {
-
-    const permitido = ["👑 DONO", "👑 SUB DONO", "GERENTE"];
-
-    const ok = interaction.member.roles.cache.some(r => permitido.includes(r.name));
-
-    if (!ok) {
-      return interaction.reply({ content: "❌ Sem permissão", ephemeral: true });
-    }
-
-    return interaction.reply("✅ Pagamento confirmado!");
   }
 
 });
