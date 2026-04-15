@@ -3,197 +3,228 @@ const {
   GatewayIntentBits,
   ChannelType,
   PermissionsBitField,
+  EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle,
-  EmbedBuilder,
-  StringSelectMenuBuilder
-} = require('discord.js');
-
-const QRCode = require('qrcode');
+  ButtonStyle
+} = require("discord.js");
 
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent
   ]
 });
 
-const TOKEN = process.env.TOKEN;
+const TOKEN = "SEU_TOKEN_AQUI";
 
-let chavePix = "NÃO DEFINIDA";
+// ======================
+// 🟣 EMBED PADRÃO ROXO
+// ======================
+function embedRoxo(titulo, desc) {
+  return new EmbedBuilder()
+    .setColor("#8000FF")
+    .setTitle(titulo)
+    .setDescription(desc);
+}
 
-const precos = {
-  "1 DIA": 17.99,
-  "3 DIAS": 27.99,
-  "7 DIAS": 40.00,
-  "30 DIAS": 85.00
-};
+// ======================
+// 👤 AO ENTRAR
+// ======================
+client.on("guildMemberAdd", async (member) => {
+  const canal = member.guild.channels.cache.find(c => c.name === "boas-vindas");
 
-client.on("ready", () => {
-  console.log("✅ BOT ONLINE");
+  // dar cargo membro
+  const cargo = member.guild.roles.cache.find(r => r.name === "👨‍👨‍👦‍👦membros");
+  if (cargo) member.roles.add(cargo);
+
+  if (canal) {
+    canal.send({
+      content: `${member}`,
+      embeds: [
+        embedRoxo("Bem-vindo!", `${member} entrou no servidor, seja bem vindo(a)!`)
+          .setImage("https://assetsio.gnwcdn.com/roblox-blox-fruits-codes-list.jpg?width=690&quality=85&format=jpg&dpr=3&auto=webp")
+      ]
+    });
+  }
 });
 
+// ======================
+// ⚙️ CRIAR SERVIDOR
+// ======================
 client.on("messageCreate", async (msg) => {
-  if (!msg.guild || msg.author.bot) return;
-
-  // SALVAR PIX
-  if (msg.content.startsWith("!chave")) {
-    const chave = msg.content.split(" ").slice(1).join(" ");
-    if (!chave) return msg.reply("❌ Coloque a chave PIX");
-
-    chavePix = chave;
-    return msg.reply("✅ Chave PIX salva!");
-  }
-
-  // CRIAR SERVIDOR COMPLETO
-  if (msg.content === "!painel") {
-
-    await msg.reply("🚀 Criando servidor COMPLETO...");
+  if (msg.content === "!criar") {
+    if (!msg.member.permissions.has(PermissionsBitField.Flags.Administrator))
+      return msg.reply("Sem permissão.");
 
     const guild = msg.guild;
 
-    // ================= CARGOS =================
-    await guild.roles.create({ name: "👑 DONO", color: "#000000" });
-    await guild.roles.create({ name: "👑 SUB DONO", color: "#000000" });
-    await guild.roles.create({ name: "GERENTE", color: "#ff0000" });
+    // ======================
+    // 🎭 CARGOS
+    // ======================
+    const dono = await guild.roles.create({ name: "𓆩♛𓆪dono", color: "#000000" });
+    const sub = await guild.roles.create({ name: "🜲sub dono", color: "#aaaaaa" });
+    const staff = await guild.roles.create({ name: "[⚒️Staff⚒️]", color: "#ff0000" });
+    const suporte = await guild.roles.create({ name: "🛡️suporte", color: "#00008b" });
+    const crew = await guild.roles.create({ name: "🏴‍☠️crew", color: "#00ffff" });
+    const membro = await guild.roles.create({ name: "👨‍👨‍👦‍👦membros", color: "#0099ff" });
 
-    // ================= CATEGORIAS =================
-    const inicio = await guild.channels.create({ name: "Início / Recepção", type: ChannelType.GuildCategory });
-    const comunidade = await guild.channels.create({ name: "【 COMUNIDADE 】", type: ChannelType.GuildCategory });
-    const geral = await guild.channels.create({ name: "🗨️ gαrαl", type: ChannelType.GuildCategory });
-    const android = await guild.channels.create({ name: "📱 FFH4X ANDROID", type: ChannelType.GuildCategory });
-    const ios = await guild.channels.create({ name: "🍎 FFH4X IOS", type: ChannelType.GuildCategory });
-    const suporte = await guild.channels.create({ name: "🎟️ ѕupoʀte", type: ChannelType.GuildCategory });
-    const calls = await guild.channels.create({ name: "🔊 CALLS", type: ChannelType.GuildCategory });
-    const downloads = await guild.channels.create({ name: "LINK DOS XITS 👇", type: ChannelType.GuildCategory });
-    const callVip = await guild.channels.create({ name: "↳ CALL ATENDIMENTO", type: ChannelType.GuildCategory });
-    const tickets = await guild.channels.create({ name: "🎫 TICKETS", type: ChannelType.GuildCategory });
+    // ======================
+    // 📁 INFORMAÇÕES
+    // ======================
+    const info = await guild.channels.create({ name: "📌 INFORMAÇÕES", type: ChannelType.GuildCategory });
 
-    // ================= CANAIS =================
-    const boas = await guild.channels.create({ name: "👾 boas-vindaꜱ", parent: inicio.id });
-    await guild.channels.create({ name: "📢 ‼️ αvιѕoѕ!", parent: inicio.id });
-    await guild.channels.create({ name: "📜 termon", parent: inicio.id });
+    await guild.channels.create({ name: "boas-vindas", type: ChannelType.GuildText, parent: info.id });
+    await guild.channels.create({ name: "regras", type: ChannelType.GuildText, parent: info.id });
+    await guild.channels.create({ name: "parceria", type: ChannelType.GuildText, parent: info.id });
+    await guild.channels.create({ name: "chat", type: ChannelType.GuildText, parent: info.id });
 
-    await guild.channels.create({ name: "🛒・coмo・αdquιrιr", parent: comunidade.id });
-    await guild.channels.create({ name: "😈・ѕejα-dα-noѕѕα-equιpe", parent: comunidade.id });
-    await guild.channels.create({ name: "🔐・verificação", parent: comunidade.id });
+    // ======================
+    // 🍍 BLOX FRUITS
+    // ======================
+    const blox = await guild.channels.create({ name: "🍍 BLOX FRUITS", type: ChannelType.GuildCategory });
 
-    await guild.channels.create({ name: "🗨️・gerαl", parent: geral.id });
+    const canais = [
+      "trade-frutas",
+      "trial-raça",
+      "leviathan",
+      "ilha-do-vulcao",
+      "evento-marinho",
+      "ilha-da-kitsune",
+      "servidor-privado",
+      "crews"
+    ];
 
-    const apk = await guild.channels.create({ name: "🏅・αpk-mod-αndroιd", parent: geral.id });
-
-    const contas = await guild.channels.create({ name: "🏅・contαѕ-ghoѕt-ff", parent: android.id });
-    const holo = await guild.channels.create({ name: "🏅 hologrαmα-αndroιd", parent: android.id });
-    const drip = await guild.channels.create({ name: "🏅・drιp-clιente", parent: android.id });
-
-    const rage = await guild.channels.create({ name: "🏅・ιphone-rαge", parent: ios.id });
-    const safe = await guild.channels.create({ name: "🏅・ιphone-ѕαfe", parent: ios.id });
-    const bypass = await guild.channels.create({ name: "🏅・ʙypαѕѕ-full", parent: ios.id });
-    const wifi = await guild.channels.create({ name: "🏅・hѕ-wιfι", parent: ios.id });
-
-    await guild.channels.create({ name: "🎟️・𝓼𝓾𝓹𝓸𝓻𝓽𝓮", parent: suporte.id });
-    await guild.channels.create({ name: "ATENDIMENTO 1", type: 2, parent: suporte.id });
-    await guild.channels.create({ name: "ATENDIMENTO 2", type: 2, parent: suporte.id });
-    await guild.channels.create({ name: "ATENDIMENTO 3", type: 2, parent: suporte.id });
-
-    await guild.channels.create({ name: "🔊 Geral 1", type: 2, parent: calls.id });
-    await guild.channels.create({ name: "🔊 Geral 2", type: 2, parent: calls.id });
-    await guild.channels.create({ name: "🔊 Suporte 1", type: 2, parent: calls.id });
-    await guild.channels.create({ name: "🔊 Suporte 2", type: 2, parent: calls.id });
-
-    await guild.channels.create({ name: "🔐 ↳ dowload-android", parent: downloads.id });
-    await guild.channels.create({ name: "🔐 ↳ dowload-ios", parent: downloads.id });
-    await guild.channels.create({ name: "🔐 ↳ dowload-wifi", parent: downloads.id });
-    await guild.channels.create({ name: "🔐 ↳ dowload-drip", parent: downloads.id });
-
-    await guild.channels.create({ name: "🔊 CALL ATENDIMENTO VIP", type: 2, parent: callVip.id });
-
-    // ================= PAINEL =================
-    async function painel(canal, nome) {
-      const embed = new EmbedBuilder()
-        .setColor("#a020f0")
-        .setTitle(`🔥😈 ${nome} 😈🔥`)
-        .setDescription("Clique em comprar")
-        .setImage("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQC7vNX0Nd8YF3uAA1R8nUyKV1H-6Lym9U9DQ&s");
-
-      const btn = new ButtonBuilder()
-        .setCustomId("buy_" + nome)
-        .setLabel("Comprar")
-        .setStyle(ButtonStyle.Success);
-
-      await canal.send({
-        embeds: [embed],
-        components: [new ActionRowBuilder().addComponents(btn)]
-      });
+    for (let c of canais) {
+      await guild.channels.create({ name: c, type: ChannelType.GuildText, parent: blox.id });
     }
 
-    await painel(apk, "ANDROID");
-    await painel(contas, "CONTAS");
-    await painel(holo, "HOLOGRAMA");
-    await painel(drip, "DRIP");
-    await painel(rage, "RAGE");
-    await painel(safe, "SAFE");
-    await painel(bypass, "BYPASS");
-    await painel(wifi, "WIFI");
+    // ======================
+    // 🎤 CALLS
+    // ======================
+    const calls = await guild.channels.create({ name: "🎤 CALLS", type: ChannelType.GuildCategory });
 
-    msg.reply("✅ SERVIDOR COMPLETO CRIADO!");
+    const callsList = [
+      "call-1",
+      "call-2",
+      "call-trial-raça",
+      "call-leviathan",
+      "call-ilha-vulcao",
+      "call-kitsune",
+      "call-evento-marinho"
+    ];
+
+    for (let c of callsList) {
+      await guild.channels.create({ name: c, type: ChannelType.GuildVoice, parent: calls.id });
+    }
+
+    // ======================
+    // 🎫 SUPORTE
+    // ======================
+    const suporteCat = await guild.channels.create({ name: "🎫 SUPORTE", type: ChannelType.GuildCategory });
+
+    const suporteCanal = await guild.channels.create({
+      name: "suporte",
+      type: ChannelType.GuildText,
+      parent: suporteCat.id
+    });
+
+    const botao = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("abrir_ticket")
+        .setLabel("Abrir Suporte")
+        .setStyle(ButtonStyle.Primary)
+    );
+
+    await suporteCanal.send({
+      embeds: [
+        embedRoxo(
+          "Central de Atendimento | Gbz bloxer",
+          `Precisa de ajuda?\n\nAbra um ticket e aguarde um membro da nossa equipe assumir seu atendimento.\n\nTodo suporte é privado.\n\nAgradecemos sua paciência 🚀`
+        )
+      ],
+      components: [botao]
+    });
+
+    msg.reply("Servidor criado com sucesso 🚀");
+  }
+
+  // ======================
+  // 🔒 LOCK / UNLOCK
+  // ======================
+  if (msg.content === "+lock") {
+    msg.channel.permissionOverwrites.edit(msg.guild.roles.everyone, {
+      SendMessages: false
+    });
+    msg.reply("🔒 Canal bloqueado");
+  }
+
+  if (msg.content === "+unlock") {
+    msg.channel.permissionOverwrites.edit(msg.guild.roles.everyone, {
+      SendMessages: true
+    });
+    msg.reply("🔓 Canal desbloqueado");
   }
 });
 
-// ================= INTERAÇÕES =================
-client.on("interactionCreate", async (interaction) => {
+// ======================
+// 🎫 SISTEMA DE TICKET
+// ======================
+client.on("interactionCreate", async (i) => {
+  if (!i.isButton()) return;
 
-  if (interaction.isButton() && interaction.customId.startsWith("buy_")) {
-
-    const nome = interaction.customId.split("_")[1];
-
-    const menu = new StringSelectMenuBuilder()
-      .setCustomId("plano_" + nome)
-      .addOptions([
-        { label: "1 DIA - 17,99", value: "1 DIA" },
-        { label: "3 DIAS - 27,99", value: "3 DIAS" },
-        { label: "7 DIAS - 40", value: "7 DIAS" },
-        { label: "30 DIAS - 85", value: "30 DIAS" }
-      ]);
-
-    return interaction.reply({
-      content: "Escolha o plano:",
-      components: [new ActionRowBuilder().addComponents(menu)],
-      ephemeral: true
-    });
-  }
-
-  if (interaction.isStringSelectMenu()) {
-
-    const plano = interaction.values[0];
-    const valor = precos[plano];
-
-    const guild = interaction.guild;
-    const categoria = guild.channels.cache.find(c => c.name === "🎫 TICKETS");
-
-    const canal = await guild.channels.create({
-      name: "ticket-" + interaction.user.username,
-      parent: categoria.id,
+  if (i.customId === "abrir_ticket") {
+    const canal = await i.guild.channels.create({
+      name: `ticket-${i.user.username}`,
+      type: ChannelType.GuildText,
       permissionOverwrites: [
-        { id: guild.roles.everyone, deny: [PermissionsBitField.Flags.ViewChannel] },
-        { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel] }
+        {
+          id: i.guild.id,
+          deny: [PermissionsBitField.Flags.ViewChannel]
+        },
+        {
+          id: i.user.id,
+          allow: [PermissionsBitField.Flags.ViewChannel]
+        }
       ]
     });
 
-    const qr = await QRCode.toDataURL(`PIX ${valor} ${chavePix}`);
+    const botoes = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("fechar")
+        .setLabel("Fechar")
+        .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder()
+        .setCustomId("assumir")
+        .setLabel("Assumir")
+        .setStyle(ButtonStyle.Success)
+    );
 
-    const embed = new EmbedBuilder()
-      .setTitle("💸 PAGAMENTO")
-      .setDescription(`Plano: ${plano}\nValor: R$ ${valor}\nPIX: ${chavePix}`)
-      .setImage(qr);
+    canal.send({
+      embeds: [
+        embedRoxo(
+          "SUPORTE Gbz bloxer",
+          `Olá ${i.user}, descreva seu problema.\n\n⚠️ Não marque staff.`
+        )
+      ],
+      components: [botoes]
+    });
 
-    await canal.send({ embeds: [embed] });
-
-    return interaction.reply({ content: "🎫 Ticket criado!", ephemeral: true });
+    i.reply({ content: `Ticket criado: ${canal}`, ephemeral: true });
   }
 
+  if (i.customId === "fechar") {
+    if (!i.member.permissions.has(PermissionsBitField.Flags.ManageChannels))
+      return i.reply({ content: "Sem permissão", ephemeral: true });
+
+    i.channel.delete();
+  }
+
+  if (i.customId === "assumir") {
+    i.reply("Ticket assumido ✅");
+  }
 });
 
 client.login(TOKEN);
